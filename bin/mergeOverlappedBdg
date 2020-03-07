@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if [ $# -lt 1 ];then
+	echo0 5 "$0 in.bdg"
+	echo0 4 "bedops and bedmap are needed"
+	exit 1
+fi
+
+bedops --partition $1 | bedmap --echo --echo-map-id --delim '\t' - $1 | awk 'BEGIN{FS=OFS="\t"} {split($4,a,";");sum=0;for(i in a){sum+=a[i]};if($2<$3 && $2>=0){print $1,$2,$3,sum}}'

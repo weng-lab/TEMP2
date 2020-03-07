@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [ $# -lt 1 ];then
+	echo0 1 $0" in.fa"
+	exit 1
+fi
+
+awk 'BEGIN{FS=" ";OFS="\t"} {if(substr($1,1,1)==">"){ch=substr($1,2,length($1)-1)}else{l[ch]+=length($1)}} END{for(i in l){print i,l[i]}}' $1 | sort -k2,2nr
