@@ -29,8 +29,11 @@ $echo 6 "\t-o out_path\tOutput directory for results. Default is assigned by the
 $echo 6 "\t-p out_prefix\tPrefix to output directory. Default is assigned by the prefix of read1.fq."
 $echo 6 "\t-M mismatch%\tPercentage of mismatch allowed when anchor to genome. Default is 2."
 $echo 6 "\t-m mismatch%\tPercentage of mismatch allowed when mapping to TEs. Default is 5."
+$echo 6 "\t-U ratio\tThe ratio between the second best alignment and the best alignment to judge if a read is uniquely mapped. Default is 0.8."
 $echo 6 "\t-f frag_length\tFragment length of the library. Default is calculated based on the mapping result."
-$echo 4 "\t-N reference_filter_window\twindow sizea (+-n) for filtering insertions overlapping reference insertions. Default is 300."
+$echo 6 "\t-N reference_filter_window\twindow sizea (+-n) for filtering insertions overlapping reference insertions. Default is 300."
+$echo 6 "\t-L\t\tSet this parameter to allow insertions overlapped with refernece annotated insertions in different strand; Default not allowed."
+$echo 6 "\t-S\t\tSet this parameter to skip insertion length checking; Default is to remove those insertions that are not full length of shorter than 500bp."
 $echo 6 "\t-c cpu_number\tNumber of CPU used. Default is 1."
 $echo 6 "\t-d\t\tSet this parameter to delete tmp files. Default is moving them to folder tmpTEMP2."
 $echo 6 "\t-h\t\tShow this message."
@@ -41,7 +44,7 @@ exit 1
 ###################
 # read parameters #
 ###################
-while getopts "hl:r:i:c:f:m:M:o:R:t:N:g:dI:vp:" OPTION
+while getopts "hl:r:i:c:f:m:M:o:R:t:N:g:dI:vp:U:LS" OPTION
 do
         case $OPTION in
                 h)	usage && exit 1;;
@@ -53,6 +56,7 @@ do
 	        f)	INSERT=$OPTARG;;
 	        g)	GENOME=`readlink -f $OPTARG`;;
 	        M)	MISMATCH=$OPTARG;;
+	        U)	UNIQ_RATIO=$OPTARG;;
 	        m)	DIV=$OPTARG;;
                 o)	OUTDIR=`readlink -f $OPTARG`;;
                 c)	CPU=$OPTARG;;
@@ -60,6 +64,8 @@ do
 	        t)	RMSK=`readlink -f $OPTARG`;;
 		N)	RMSK_WINDOW=$OPTARG;;
 		d)	CLEAN=d;;
+		L)	LOOSE_OVERLAP=1;;
+		S)	SKIP_SHORT=1;;
 		v)	$echo 5 "\nTEMP2:\t\tVersion ${TEMP2_VERSION}\nConstruct time:\tApril 29, 2019\n" && exit 1;;
                 ?)	usage
         esac
@@ -88,6 +94,7 @@ done
 [ ${INSERT} -gt 0 ] 2>/dev/null || INSERT=Y
 [ -z ${DIV%%*[!0-9.]*} ] && DIV=5
 [ -z ${MISMATCH%%*[!0-9.]*} ] && MISMATCH=2
+[ -z ${UNIQ_RATIO} ] && UNIQ_RATIO=0.8
 [ -z ${RMSK_WINDOW%%*[!0-9]*} ] && RMSK_WINDOW=300
 [ -z ${CLEAN} ] && CLEAN=p
 
@@ -113,7 +120,7 @@ $echo 4 "------ Start pipeline ------"
 # Genome mapping if not done yet
 if [ -z ${BAM} ];then
 	$echo 2 "bam file not specified, map raw reads tp genome via bwa mem"
-	bwa mem -T 20 -Y -t ${CPU} ${INDEX} ${LEFT} ${RIGHT} > ${PREFIX}.sam 2>${PREFIX}.bwamem.log || \
+	bwa mem -t ${CPU} ${INDEX} ${LEFT} ${RIGHT} > ${PREFIX}.sam 2>${PREFIX}.bwamem.log || \
 		{ $echo 0 "Error: bwa mem failed, please check ${OUTDIR}/${PREFIX}.bwamem.log. Exiting..." && exit 1; }
 	$echo 2 "transform sam to sorted bam and index it"
 	samtools view -bhS -@ ${CPU} ${PREFIX}.sam > ${PREFIX}.bam
@@ -131,7 +138,7 @@ if [ -f ${PREFIX}.pair.uniq.split.fastq ] && [ -f ${PREFIX}.pair.uniq.split.bed 
 	$echo 2 "concordant-uniq-split reads exists, skip"
 else
 	$echo 2 "get concordant-uniq-split reads"
-	samtools view -@ ${CPU} -h -f 0X2 -F 0X800 ${BAM} | awk 'BEGIN{FS=OFS="\t"} {for(i=12;i<=100;i++){if($i~/AS:i:/){as=substr($i,6)};if($i~/XS:i:/){xs=substr($i,6);break}};if(as-xs>as*0.8){print $0}}' - | grep "SA:Z:" | awk '(and($2,16)==0 && $6~/^[0-9]+S/) || (and($2,16)==16 && $6~/S$/)' - | cat ${PREFIX}.tmp.header - | samtools view -@ ${CPU} -bhS - | samtools sort -@ ${CPU} -o ${PREFIX}.pair.uniq.split.bam -
+	samtools view -@ ${CPU} -h -f 0X2 -F 0X800 ${BAM} | awk -v uniq_ratio=${UNIQ_RATIO} 'BEGIN{FS=OFS="\t"} {for(i=12;i<=100;i++){if($i~/AS:i:/){as=substr($i,6)};if($i~/XS:i:/){xs=substr($i,6);break}};if(xs/1<as*uniq_ratio){print $0}}' - | grep "SA:Z:" | awk '(and($2,16)==0 && $6~/^[0-9]+S/) || (and($2,16)==16 && $6~/S$/)' - | cat ${PREFIX}.tmp.header - | samtools view -@ ${CPU} -bhS - | samtools sort -@ ${CPU} -o ${PREFIX}.pair.uniq.split.bam -
 	samtools fastq -@ ${CPU} ${PREFIX}.pair.uniq.split.bam | awk '{if(NR%4==1){print substr($1,1,length($1)-2)"_"substr($1,length($1))}else{print $0}}' - > ${PREFIX}.pair.uniq.split.fastq 
 	bedtools bamtobed -i ${PREFIX}.pair.uniq.split.bam -tag NM | awk -v div=${MISMATCH} 'BEGIN{FS=OFS="\t"} {$4=substr($4,1,length($4)-2)"_"substr($4,length($4));if($5<=(int(($3-$2-1)*div/100)+1)){print $0}}' - > ${PREFIX}.pair.uniq.split.bed
 fi
@@ -149,7 +156,7 @@ if [ -f ${PREFIX}.unpair.uniq.1.fastq ] && [ -f ${PREFIX}.unpair.uniq.2.fastq ] 
 	$echo 2 "mate seq of the uniq-unpaired reads exists, skip"
 else
 	$echo 2 "get mate seq of the uniq-unpaired"
-	$BINDIR/pickUniqPairFastq.sh ${BAM} ${PREFIX} $CPU ${INSERT}
+	$BINDIR/pickUniqPairFastq.sh ${BAM} ${PREFIX} $CPU ${INSERT} ${UNIQ_RATIO}
 fi
 
 # Map to transposons
@@ -195,14 +202,24 @@ $echo 2 "filter candidate insertions which overlap with the same transposon inse
 ${BINDIR}/fixCoor.sh ${PREFIX}.final.bed | awk 'BEGIN{FS=OFS="\t"} {$1=$1"__"$4;print $0}' | sort -k1,1 -k2,2n | awk '$2>=0' > ${PREFIX}.tmp
 RAWINS_UNFILTER=(`wc -l ${PREFIX}.tmp`)
 awk 'BEGIN{FS=OFS="\t"} {$1=$1"__"$4;print $0}' ${RMSK} > ${PREFIX}.tmp.rmsk.bed && RMSK=${PREFIX}.tmp.rmsk.bed
-bedtools window -w ${RMSK_WINDOW} -a ${PREFIX}.tmp -b ${RMSK} -v | awk 'BEGIN{FS=OFS="\t"} {split($1,a,"__");$1=a[1];$4=a[2];print $0}' > ${PREFIX}.insertion.raw.bed
-bedtools window -w ${RMSK_WINDOW} -a ${PREFIX}.tmp -b ${RMSK} | awk 'BEGIN{FS=OFS="\t"} {split($1,a,"__");print a[1],$2,$3,0,0,$6}' > ${PREFIX}.removed.bed
-bedtools window -w ${RMSK_WINDOW} -a ${PREFIX}.tmp -b ${RMSK} | awk 'BEGIN{FS=OFS="\t"} {if($7=="1p1"){split($1,a,"__");print a[1],$2,$3,0,0,$6}}' > ${PREFIX}.removed.1p1.bed
+if [ -z ${LOOSE_OVERLAP} ];then
+	bedtools window -w ${RMSK_WINDOW} -a ${PREFIX}.tmp -b ${RMSK} -v | awk 'BEGIN{FS=OFS="\t"} {split($1,a,"__");$1=a[1];$4=a[2];print $0}' > ${PREFIX}.insertion.raw.bed
+	bedtools window -w ${RMSK_WINDOW} -a ${PREFIX}.tmp -b ${RMSK} | awk 'BEGIN{FS=OFS="\t"} {split($1,a,"__");print a[1],$2,$3,0,0,$6}' > ${PREFIX}.removed.bed
+	bedtools window -w ${RMSK_WINDOW} -a ${PREFIX}.tmp -b ${RMSK} | awk 'BEGIN{FS=OFS="\t"} {if($7=="1p1"){split($1,a,"__");print a[1],$2,$3,0,0,$6}}' > ${PREFIX}.removed.1p1.bed
+else
+	bedtools window -w ${RMSK_WINDOW} -a ${PREFIX}.tmp -b ${RMSK} -v -sm | awk 'BEGIN{FS=OFS="\t"} {split($1,a,"__");$1=a[1];$4=a[2];print $0}' > ${PREFIX}.insertion.raw.bed
+	bedtools window -w ${RMSK_WINDOW} -a ${PREFIX}.tmp -b ${RMSK} -sm | awk 'BEGIN{FS=OFS="\t"} {split($1,a,"__");print a[1],$2,$3,0,0,$6}' > ${PREFIX}.removed.bed
+	bedtools window -w ${RMSK_WINDOW} -a ${PREFIX}.tmp -b ${RMSK} -sm | awk 'BEGIN{FS=OFS="\t"} {if($7=="1p1"){split($1,a,"__");print a[1],$2,$3,0,0,$6}}' > ${PREFIX}.removed.1p1.bed
+fi
 awk '$7!="1p1"' ${PREFIX}.insertion.raw.bed | bedtools window -w 50 -a - -b ${PREFIX}.removed.bed -v > ${PREFIX}.t
 awk '$7=="1p1"' ${PREFIX}.insertion.raw.bed | bedtools window -w 50 -a - -b ${PREFIX}.removed.1p1.bed -v >> ${PREFIX}.t
 RAWINS_FILTERRMSK=(`wc -l ${PREFIX}.t`) && FILTERRMSK=`expr ${RAWINS_UNFILTER} - ${RAWINS_FILTERRMSK}`
 # filter false positive 1p1 insertions which are not full length but short than 500bp 
-awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){tel[$1]=$2}else{if($7=="1p1"){if(tel[$4]>500 || ($9-$8)>=500){print $0}}else{print $0}}}' ${PREFIX}.tmp.te.size ${PREFIX}.t | sort -k1,1 -k2,2n > ${PREFIX}.insertion.raw.bed 
+if [ ${SKIP_SHORT} ];then
+	awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){tel[$1]=$2}else{if($7=="1p1"){if(tel[$4]>500 || ($9-$8)>=500){print $0}}else{print $0}}}' ${PREFIX}.tmp.te.size ${PREFIX}.t | sort -k1,1 -k2,2n > ${PREFIX}.insertion.raw.bed 
+else
+	cat ${PREFIX}.t | sort -k1,1 -k2,2n > ${PREFIX}.insertion.raw.bed 
+fi
 RAWINS_FILTER1P1=(`wc -l ${PREFIX}.insertion.raw.bed`) && FILTER1P1=`expr ${RAWINS_FILTERRMSK} - ${RAWINS_FILTER1P1}`
 # filter false positive insertions in high depth regions
 $echo 2 "filter candidate insertions in high depth region"
