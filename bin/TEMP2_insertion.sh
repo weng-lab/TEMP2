@@ -32,7 +32,7 @@ $echo 6 "\t-m mismatch%\tPercentage of mismatch allowed when mapping to TEs. Def
 $echo 6 "\t-U ratio\tThe ratio between the second best alignment and the best alignment to judge if a read is uniquely mapped. Default is 0.8."
 $echo 6 "\t-f frag_length\tFragment length of the library. Default is calculated based on the mapping result."
 $echo 6 "\t-N reference_filter_window\twindow sizea (+-n) for filtering insertions overlapping reference insertions. Default is 300."
-$echo 6 "\t-L\t\tSet this parameter to allow insertions overlapped with refernece annotated insertions in different strand; Default not allowed."
+$echo 6 "\t-L\t\tSet this parameter to use a looser criteria to filter reference annotated copy overlapped insertions; Default not allowed."
 $echo 6 "\t-S\t\tSet this parameter to skip insertion length checking; Default is to remove those insertions that are not full length of shorter than 500bp."
 $echo 6 "\t-c cpu_number\tNumber of CPU used. Default is 1."
 $echo 6 "\t-d\t\tSet this parameter to delete tmp files. Default is moving them to folder tmpTEMP2."
@@ -293,7 +293,13 @@ ${BINDIR}/generateDistribution.R ${PREFIX}.transposon.sense.bdg ${PREFIX}.transp
 $echo 2 "filter unreliable singleton insertions, also filter 2p insertions overlapped with similar reference transposon copies"
 awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){if($6>0 && $10=="pass"){a[$1]=$6/$2}}else{print $0,a[$1]/1}}' ${PREFIX}.soma.rate.bed ${PREFIX}.TPregion.bed > ${PREFIX}.tmp
 awk 'BEGIN{FS=OFS="\t"} {if($7=="singleton"){split($13,a,",");print a[1],a[2],a[3],0,0,a[4],$0}}' ${PREFIX}.insertion.raw.bed | intersectBed -a - -b ${PREFIX}.tmp -s -f 1 -wo | cut -f 7-23,30 | awk 'BEGIN{FS=OFS="\t"} {if($7=="singleton" && $18>0){$13=int($18*10000)/100"%"}else{$13="100%"};print $0}' | cut -f 1-17 > ${PREFIX}.tmp1
-awk 'BEGIN{FS=OFS="\t"} {if($7=="2p"){split($13,a,",");print a[1],a[2],a[3],0,0,a[4],$0}}' ${PREFIX}.insertion.raw.bed | intersectBed -a - -b ${PREFIX}.tmp -s -f 1 -wo | cut -f 7-23,30 | awk 'BEGIN{FS=OFS="\t"} {if($7=="singleton"){$13=int($18*10000)/100"%"}else{$13="100%"};print $0}' | cut -f 1-17 > ${PREFIX}.tmp2
+if [ ${LOOSE_OVERLAP} ];then
+	awk 'BEGIN{FS=OFS="\t"} {if($7=="2p"){split($13,a,",");print a[1],a[2],a[3],0,0,a[4],$0}}' ${PREFIX}.insertion.raw.bed | intersectBed -a - -b ${PREFIX}.tmp -s -f 1 -wo | cut -f 7-23,30 | awk 'BEGIN{FS=OFS="\t"} {if($7=="singleton"){$13=int($18*10000)/100"%"}else{$13="100%"};print $0}' | cut -f 1-17 > ${PREFIX}.tmp2
+else
+	echo -e "chrN\t0\t1\t0\t0\t+" > ${PREFIX}.tmp0
+	awk 'BEGIN{FS=OFS="\t"} {if($7=="2p"){split($13,a,",");print a[1],a[2],a[3],0,0,a[4],$0}}' ${PREFIX}.insertion.raw.bed | intersectBed -a - -b ${PREFIX}.tmp0 -s -f 1 -wo | cut -f 7-23,30 | awk 'BEGIN{FS=OFS="\t"} {if($7=="singleton"){$13=int($18*10000)/100"%"}else{$13="100%"};print $0}' | cut -f 1-17 > ${PREFIX}.tmp2
+	rm ${PREFIX}.tmp0
+fi
 awk 'BEGIN{FS=OFS="\t"} {if($7=="1p1"){$13="100%";print $0}}' ${PREFIX}.insertion.raw.bed | cat - ${PREFIX}.tmp1 ${PREFIX}.tmp2 > ${PREFIX}.insertion.filtered.bed
 
 # Calculate frequency of each transposon insertion
