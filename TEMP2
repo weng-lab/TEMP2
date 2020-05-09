@@ -12,7 +12,7 @@ $echo 5 "      -- germline and somatic transposon insertion and deletion analysi
 $echo 4 "usage:"
 $echo 0 "$0 insertion -h\t# for germline and somatic transposon insertion\n"
 $echo 1 "$0 insertion2 -h\t# for only germline transposon insertion\n"
-$echo 6 "$0 deletion -h\t\t# for transposon deletion"
+$echo 6 "$0 absence -h\t\t# for transposon absence or deletion"
 }
 
 # run #
@@ -26,7 +26,7 @@ case ${1} in
 	insertion2)
 		shift && bash ${BINDIR}/TEMP2_insertion2.sh "$@";;
 	deletion)
-		shift && bash ${BINDIR}/TEMP2_deletion.sh "$@";;
+		shift && bash ${BINDIR}/TEMP2_absence.sh "$@";;
 	*)
 		usage;;
 esac

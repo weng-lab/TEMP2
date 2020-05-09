@@ -21,8 +21,6 @@ BEGIN{FS=OFS="\t"}
 	nm=$5;
 	if(cigar~/S$/ && cigar!~/^S/ && $6=="+"){$5=1}
 	else if(cigar~/^S/ && cigar!~/S$/ && $6=="-"){$5=1}
-	if(cigar~/H$/ && cigar!~/^H/ && $6=="-"){$5=1;$6="+"}
-	else if(cigar~/^H/ && cigar!~/H$/ && $6=="+"){$5=1;$6="-"}
 	else{$5=0};
 	print $0,nm
 }' > $2.unpair.uniq.bed

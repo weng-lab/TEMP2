@@ -27,6 +27,7 @@ $echo 4 "\t\t\tYou can download it from UCSC or creat it by running RepeatMasker
 $echo 6 "Options:"
 $echo 6 "\t-o out_path\tOutput directory for results. Default is assigned by the prefix of read1.fq."
 $echo 6 "\t-p out_prefix\tPrefix to output directory. Default is assigned by the prefix of read1.fq."
+$echo 6 "\t-A \t\tSet this parameter to enable ALU mode, which allows the insertion between two concordantly mapped reads"
 $echo 6 "\t-M mismatch%\tPercentage of mismatch allowed when anchor to genome. Default is 2."
 $echo 6 "\t-m mismatch%\tPercentage of mismatch allowed when mapping to TEs. Default is 5."
 $echo 6 "\t-U ratio\tThe ratio between the second best alignment and the best alignment to judge if a read is uniquely mapped. Default is 0.8."
@@ -44,7 +45,7 @@ exit 1
 ###################
 # read parameters #
 ###################
-while getopts "hl:r:i:c:f:m:M:o:R:t:N:g:dI:vp:U:LS" OPTION
+while getopts "hl:r:i:c:f:m:M:o:R:t:N:g:dI:vp:U:LSA" OPTION
 do
         case $OPTION in
                 h)	usage && exit 1;;
@@ -66,6 +67,7 @@ do
 		d)	CLEAN=d;;
 		L)	LOOSE_OVERLAP=1;;
 		S)	SKIP_SHORT=1;;
+		A)	ALU_MODE=1;;
 		v)	$echo 5 "\nTEMP2:\t\tVersion ${TEMP2_VERSION}\nConstruct time:\tApril 29, 2019\n" && exit 1;;
                 ?)	usage
         esac
@@ -136,10 +138,17 @@ samtools view -H ${BAM} > ${PREFIX}.tmp.header
 if [ -f ${PREFIX}.pair.uniq.split.fastq ] && [ -f ${PREFIX}.pair.uniq.split.bed ];then
 	$echo 2 "concordant-uniq-split reads exists, skip"
 else
-	$echo 2 "get concordant-uniq-split reads"
+	$echo 2 "get concordant-uniq-edge-split reads"
 	samtools view -@ ${CPU} -h -f 0X2 -F 0X800 ${BAM} | awk -v uniq_ratio=${UNIQ_RATIO} 'BEGIN{FS=OFS="\t"} {for(i=12;i<=100;i++){if($i~/AS:i:/){as=substr($i,6)};if($i~/XS:i:/){xs=substr($i,6);break}};if(xs/1<as*uniq_ratio){print $0}}' - | grep "SA:Z:" | awk '(and($2,16)==0 && $6~/^[0-9]+S/) || (and($2,16)==16 && $6~/S$/)' - | cat ${PREFIX}.tmp.header - | samtools view -@ ${CPU} -bhS - | samtools sort -@ ${CPU} -o ${PREFIX}.pair.uniq.split.bam -
 	samtools fastq -@ ${CPU} ${PREFIX}.pair.uniq.split.bam | awk '{if(NR%4==1){print substr($1,1,length($1)-2)"_"substr($1,length($1))}else{print $0}}' - > ${PREFIX}.pair.uniq.split.fastq 
-	bedtools bamtobed -i ${PREFIX}.pair.uniq.split.bam -tag NM | awk -v div=${MISMATCH} 'BEGIN{FS=OFS="\t"} {$4=substr($4,1,length($4)-2)"_"substr($4,length($4));if($5<=(int(($3-$2-1)*div/100)+1)){print $0}}' - > ${PREFIX}.pair.uniq.split.bed
+	bedtools bamtobed -i ${PREFIX}.pair.uniq.split.bam -tag NM | awk -v div=${MISMATCH} 'BEGIN{FS=OFS="\t"} {$4=substr($4,1,length($4)-2)"_"substr($4,length($4));$6=$6=="+"?"-":"+";if($5<=(int(($3-$2-1)*div/100)+1)){print $0}}' - > ${PREFIX}.pair.uniq.split.bed
+	if [ ${ALU_MODE} ];then
+		$echo 2 "ALU mode enabled, also get concordant-uniq-internal-split reads"
+		samtools view -@ ${CPU} -h -f 0X2 -F 0X800 ${BAM} | awk -v uniq_ratio=${UNIQ_RATIO} 'BEGIN{FS=OFS="\t"} {for(i=12;i<=100;i++){if($i~/AS:i:/){as=substr($i,6)};if($i~/XS:i:/){xs=substr($i,6);break}};if(xs/1<as*uniq_ratio){print $0}}' - | grep "SA:Z:" | awk '(and($2,16)==16 && $6~/^[0-9]+S/) || (and($2,16)==0 && $6~/S$/)' - | cat ${PREFIX}.tmp.header - | samtools view -@ ${CPU} -bhS - | samtools sort -@ ${CPU} -o ${PREFIX}.pair.uniq.split.internal.bam -
+		samtools fastq -@ ${CPU} ${PREFIX}.pair.uniq.split.internal.bam | awk 'BEGIN{FS=OFS="\t"} {if(NR%4==1){print substr($1,1,length($1)-2)"_"substr($1,length($1))}else{print $0}}' - > ${PREFIX}.tmp
+		${BINDIR}/revertFq.sh ${PREFIX}.tmp >> ${PREFIX}.pair.uniq.split.fastq 
+		bedtools bamtobed -i ${PREFIX}.pair.uniq.split.internal.bam -tag NM | awk -v div=${MISMATCH} 'BEGIN{FS=OFS="\t"} {$4=substr($4,1,length($4)-2)"_"substr($4,length($4));if($5<=(int(($3-$2-1)*div/100)+1)){print $0}}' - >> ${PREFIX}.pair.uniq.split.bed
+	fi
 fi
 
 # check fragment length
@@ -250,12 +259,10 @@ $echo 2 "filter unreliable 2p insertions overlapped with similar reference trans
 awk 'BEGIN{FS=OFS="\t"} {print $0,1}' ${PREFIX}.TPregion.bed > ${PREFIX}.tmp
 if [ -z ${LOOSE_OVERLAP} ];then
 	awk 'BEGIN{FS=OFS="\t"} {if($7=="2p"){split($13,a,",");print a[1],a[2],a[3],0,0,a[4],$0}}' ${PREFIX}.insertion.raw.bed | intersectBed -a - -b ${PREFIX}.tmp -s -f 1 -wo | cut -f 7-23,30 | awk 'BEGIN{FS=OFS="\t"} {if($7=="singleton"){$13=int($18*10000)/100"%"}else{$13="100%"};print $0}' | cut -f 1-17 > ${PREFIX}.tmp2
+	awk 'BEGIN{FS=OFS="\t"} {if($7=="1p1"){$13="100%";print $0}}' ${PREFIX}.insertion.raw.bed | cat - ${PREFIX}.tmp2 > ${PREFIX}.insertion.filtered.bed
 else
-	echo -e "chrN\t0\t1\t0\t0\t+" > ${PREFIX}.tmp0
-	awk 'BEGIN{FS=OFS="\t"} {if($7=="2p"){split($13,a,",");print a[1],a[2],a[3],0,0,a[4],$0}}' ${PREFIX}.insertion.raw.bed | intersectBed -a - -b ${PREFIX}.tmp0 -s -f 1 -wo | cut -f 7-23,30 | awk 'BEGIN{FS=OFS="\t"} {if($7=="singleton"){$13=int($18*10000)/100"%"}else{$13="100%"};print $0}' | cut -f 1-17 > ${PREFIX}.tmp2
-	rm ${PREFIX}.tmp0
+	awk 'BEGIN{FS=OFS="\t"} {if($7=="1p1" || $7=="2p"){$13="100%";print $0}}' ${PREFIX}.insertion.raw.bed > ${PREFIX}.insertion.filtered.bed
 fi
-awk 'BEGIN{FS=OFS="\t"} {if($7=="1p1"){$13="100%";print $0}}' ${PREFIX}.insertion.raw.bed | cat - ${PREFIX}.tmp2 > ${PREFIX}.insertion.filtered.bed
 
 # Calculate frequency of each transposon insertion
 $echo 2 "Calculate frequency of each transposon insertion"
