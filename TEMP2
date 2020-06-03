@@ -3,16 +3,16 @@ BINDIR=$(dirname `readlink -f $0`) && export BINDIR=${BINDIR}/bin
 export echo="${BINDIR}/echo0"
 
 # version #
-export TEMP2_VERSION=2.01
+export TEMP2_VERSION=0.1.1
 
 # usage #
 usage (){
 $echo 5 "TEMP2 -- Version ${TEMP2_VERSION}"
-$echo 5 "      -- germline and somatic transposon insertion and deletion analysis\n"
+$echo 5 "      -- germline and de novo transposon insertion and deletion analysis\n"
 $echo 4 "usage:"
-$echo 0 "$0 insertion -h\t# for germline and somatic transposon insertion\n"
-$echo 1 "$0 insertion2 -h\t# for only germline transposon insertion\n"
-$echo 6 "$0 absence -h\t\t# for transposon absence or deletion"
+$echo 0 "TEMP2 insertion -h\t# for germline and somatic transposon insertion\n"
+$echo 1 "TEMP2 insertion2 -h\t# for only germline transposon insertion\n"
+$echo 6 "TEMP2 absence -h\t\t# for transposon absence or deletion"
 }
 
 # run #
