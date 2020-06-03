@@ -21,7 +21,6 @@ jiali.zhuang@umassmed.edu
 Options:
         -i     Input file in bam format with full path. Please sort and index the file before calling this program. 
                Sorting and indexing can be done by 'samtools sort' and 'samtools index'
-        -s     Directory where all the scripts are
         -o     Path to output directory. Default is current directory
         -r     Annotated transposon positions in the genome (e.g., repeakMask) in bed6 format with full path
         -t     2bit file for the reference genome (can be downloaded from UCSC Genome Browser)
@@ -35,7 +34,7 @@ echo -en "\e[0m"
 }
 
 # taking options
-while getopts "hi:c:f:o:r:s:t:x:" OPTION
+while getopts "hi:c:f:o:r:t:x:" OPTION
 do
         case $OPTION in
                 h)
@@ -53,9 +52,6 @@ do
                 c)
                         CPU=$OPTARG
                 ;;
-                s)
-                        BINDIR=$OPTARG
-                ;;
 	        r)
 		        TEBED=$OPTARG
 		;;
@@ -71,6 +67,7 @@ do
         esac
 done
 
+export PATH=${BINDIR}:${PATH} # export TEMP2/bin as temporary path
 if [[ -z $BAM ]] || [[ -z $BINDIR ]] || [[ -z $TEBED ]] || [[ -z $REF ]]
 then
         usage && exit 1

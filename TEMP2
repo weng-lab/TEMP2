@@ -25,7 +25,7 @@ case ${1} in
 		shift && bash ${BINDIR}/TEMP2_insertion.sh "$@";;
 	insertion2)
 		shift && bash ${BINDIR}/TEMP2_insertion2.sh "$@";;
-	deletion)
+	absence)
 		shift && bash ${BINDIR}/TEMP2_absence.sh "$@";;
 	*)
 		usage;;
