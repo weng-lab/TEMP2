@@ -4,6 +4,9 @@ TEMP2
 ## Overview   
 TEMP2 is an algorithm for detecting transposon insertions using short-read whole-genome sequencing data. It can not only precisely detect germline transposon insertions, but also estimate the number of uninherited/somatic transposon insertions by removing artificial insertion introduced by chimeric reads.
 
+If you use TEMP2 for transposon insertion detection, please cite:  
+Yu T ... Weng Z. TEMP2: an algorithm for detecting germline and de novo transposon insertions using short-read whole-genome sequencing data. 2020.  
+  
 Current version v0.1.1
 
 Author: Tianxiong Yu (yutianxiong@gmail.com) in Weng Lab   
