@@ -37,6 +37,17 @@ tar -xzvf TEMP2.v0.1.1.tar.gz
 cd TEMP2.v0.1.1
 ln -s $PWD/TEMP2 your_bin_path/
 ```
+  
+## Testing
+TEMP2 integrates a tested dataset in /TEMP2.v0.1.1/test/
+To test if TEMP2 is successfully installed, you can run the command below:
+```
+cd TEMP2.v0.1.1/test
+TEMP2 insertion -l test.1.fastq.gz -r test.2.fastq.gz -I bwa_index/chr2L -g ch
+r2L.fa -R transposon.fa -t rmsk.bed -o test_output -c 8
+```
+
+This command takes around 2 minutes with 8 avaiable CPU. A successul installation should outputs `test.insertion.bed` and `test.soma.summary.txt` in the folder `test_output`, which contains detected insertions and estimated *de novo*insertion number per genome respectively.
    
 ## Getting start
 TEMP2 includes three modules:  
