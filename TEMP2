@@ -12,7 +12,7 @@ $echo 5 "      -- germline and de novo transposon insertion and deletion analysi
 $echo 4 "usage:"
 $echo 0 "TEMP2 insertion -h\t# for germline and somatic transposon insertion\n"
 $echo 1 "TEMP2 insertion2 -h\t# for only germline transposon insertion\n"
-$echo 6 "TEMP2 absence -h\t\t# for transposon absence or deletion"
+$echo 6 "TEMP2 absence -h\t# for transposon absence or deletion"
 }
 
 # run #
