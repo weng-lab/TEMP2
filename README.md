@@ -26,7 +26,7 @@ If you have any questions or find any bugs please contact Tianxiong Yu through y
 With [git](https://git-scm.com/downloads) installed, simply type the following command to install **TEMP2**:
 ```
 git clone https://github.com/weng-lab/TEMP2
-ln -s $PWD/TEMP2/TEMP2 your_bin_path/
+ln -s $PWD/TEMP2.v0.1.1/TEMP2 your_bin_path/
 ```
 
 To avoid mixing the pre-compiled tools with your own versions, we do **not** recommend to add `/TEMP2/bin` to the `$PATH`.
