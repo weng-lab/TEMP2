@@ -7,7 +7,7 @@ TEMP2 is an algorithm for detecting transposon insertions using short-read whole
 If you use TEMP2 for transposon insertion detection, please cite:  
 Yu T ... Weng Z. TEMP2: an algorithm for detecting germline and de novo transposon insertions using short-read whole-genome sequencing data. 2020.  
   
-Current version v0.1.1
+Current version
 
 Author: Tianxiong Yu (yutianxiong@gmail.com) in Weng Lab   
 If you have any questions or find any bugs please contact Tianxiong Yu through yutianxiong@gmail.com.
@@ -26,23 +26,23 @@ If you have any questions or find any bugs please contact Tianxiong Yu through y
 With [git](https://git-scm.com/downloads) installed, simply type the following command to install **TEMP2**:
 ```
 git clone https://github.com/weng-lab/TEMP2
-ln -s $PWD/TEMP2.v0.1.1/TEMP2 your_bin_path/
+ln -s $PWD/TEMP2/TEMP2 your_bin_path/
 ```
 
 To avoid mixing the pre-compiled tools with your own versions, we do **not** recommend to add `/TEMP2/bin` to the `$PATH`.
 
 Alternatively, you can also install TEMP2 after fetching [source code](http://publications.wenglab.org/TEMP2/Release):
 ```
-tar -xzvf TEMP2.v0.1.1.tar.gz
-cd TEMP2.v0.1.1
+tar -xzvf TEMP2.tar.gz
+cd TEMP2
 ln -s $PWD/TEMP2 your_bin_path/
 ```
   
 ## Testing
-TEMP2 integrates a tested dataset in /TEMP2.v0.1.1/test/  
+TEMP2 integrates a tested dataset in /TEMP2/test/  
 To test if TEMP2 is successfully installed, you can run the command below:
 ```
-cd TEMP2.v0.1.1/test
+cd TEMP2/test
 TEMP2 insertion -l test.1.fastq.gz -r test.2.fastq.gz -I bwa_index/chr2L -g chr2L.fa -R transposon.fa -t rmsk.bed -o test_output -c 8
 ```
 
