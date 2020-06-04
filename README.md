@@ -56,7 +56,7 @@ TEMP2 includes three modules:
 After installation, typing `TEMP2` in the terminal produces a list of usage options, which are:   
 
 ```
-TEMP2 -- Version 2.01
+TEMP2 -- Version 0.1.1
  -- germline and de novo transposon insertion and deletion analysis
 
 usage:
