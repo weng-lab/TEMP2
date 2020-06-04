@@ -103,7 +103,7 @@ done
 ######################
 # check dependencies #
 ######################
-export PATH=${BINDIR}:${PATH} # export TEMP2/bin as temporary path
+export PATH=${PATH}:${BINDIR} # export TEMP2/bin as temporary path
 function checkTools() {
         $echo 6 "${1}: \c" && which "$1" || { $echo 0 "Error: software ${1} not installed! Exiting..." && exit 1; }
 }

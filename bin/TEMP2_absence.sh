@@ -67,7 +67,7 @@ do
         esac
 done
 
-export PATH=${BINDIR}:${PATH} # export TEMP2/bin as temporary path
+export PATH=${PATH}:${BINDIR} # export TEMP2/bin as temporary path
 if [[ -z $BAM ]] || [[ -z $BINDIR ]] || [[ -z $TEBED ]] || [[ -z $REF ]]
 then
         usage && exit 1
