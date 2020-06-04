@@ -123,8 +123,8 @@ The **insertion2** module accepts exactly the same arguments as **insertion**. H
 **Column 9**: Number of reads that do not support this insertion, AKA reference reads.  
 **Column 10**: Number of supporting reads at 5'end of the insertion.  
 **Column 11**: Number of supporting reads at 3'end of the insertion.  
-**Column 12**: Target site duplication (TSD) of the insertion. *unknown* is shown if not applicable.
-**Column 13**: Reliability of this insertion (0–100). 100 for *2p* and *1p1* insertions. For *singleton* insertions, TEMP2 already filtered out most of the false positives but not all of them. The reliability is a percentage stand for how many *singleton* insertions of a specific transposon is 
+**Column 12**: Target site duplication (TSD) of the insertion. *unknown* is shown if not applicable.  
+**Column 13**: Reliability of this insertion (0–100). 100 for *2p* and *1p1* insertions. For *singleton* insertions, TEMP2 already filtered out most of the false positives but not all of them. The reliability is a percentage stand for how many *singleton* insertions of a specific transposon is.  
 **Column 14**: Number of supporting reads at 5'end of the insertion junction.  
 **Column 15**: Number of supporting reads at 3'end of the insertion junction.  
 
