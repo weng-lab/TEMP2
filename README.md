@@ -52,7 +52,7 @@ This command takes around 2 minutes with 8 avaiable CPU. A successul installatio
 TEMP2 includes three modules:  
 1. **insertion**. The most general module that detects both germline and *de novo* transposon insertions.
 2. **insertion2**. A simplified module that only detects germline transposon insertions.
-3. **absence**. The module annotates the absence of reference transposon copies. Same as `TEMP\_absence.sh` in our previous version ––– **TEMP**.  
+3. **absence**. The module annotates the absence of reference transposon copies. Same as `TEMP_absence.sh` in our previous version ––– **TEMP**.  
 After installation, typing `TEMP2` in the terminal produces a list of usage options, which are:   
 
 ```
