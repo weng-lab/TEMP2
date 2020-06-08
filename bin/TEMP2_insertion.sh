@@ -338,6 +338,9 @@ $echo 2 "calculate somatic insertion rate per genome"
 AD=`awk '{if(NR>1 && $7=="singleton"){a1+=($8+2*$9);a2++}} END{if(!a2){print 1}else{print a1/a2}}' ${PREFIX}.insertion.bed`
 awk -v ad=$AD 'BEGIN{FS=OFS="\t"} {if(NR==1){$1=$1"\testimatedSomaticInsertionNumberPerGenome\t95percentileSomaticInsertionNumberPerGenome";print $0}else{printf "%s\t%.5f\t%.5f\t",$1,$2/ad,$3/ad;print $2,$3,$4,$5,$6,$7,$8}}' ${PREFIX}.soma.summary.txt > ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.soma.summary.txt
 
+# Fix all 2p insertions into full-length insertion
+awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){te[$1]=$2}else{if($7=="2p"){split($4,a,",");$4="";for(i=1;i<=length(a);i++){split(a[i],b,":");$4=$4","b[1]":1:"te[b[1]]":"b[4]};$4=substr($4,2)};print $0}}' ${PREFIX}.tmp.te.size ${PREFIX}.insertion.bed > ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.insertion.bed 
+
 # Clean tmp files
 $echo 2 "clean tmp files"
 ${BINDIR}/cleanTempFiles.sh ${PREFIX} ${CLEAN}

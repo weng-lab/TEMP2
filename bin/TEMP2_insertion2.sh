@@ -285,6 +285,9 @@ awk 'BEGIN{FS=OFS="\t"} {if($14!="unknown"){split($14,a,":");split(a[2],b,"-");p
 awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){if(NR%2==1){i=substr($1,2)}else{seq[i]=$0}}else{if(seq[FNR]){$14=toupper(seq[FNR])};print $0}}' ${PREFIX}.tmp ${PREFIX}.insertion.bed  | awk 'BEGIN{FS=OFS="\t"} {if($2==$3){$3=$3+1};print $0}' | ${BINDIR}/removeRedundantIns.sh - | awk 'BEGIN{FS=OFS="\t";print "#Chr\tStart\tEnd\tTransposon:Start:End:Strand\tFrequency\tStrand\tType\tSupportReads\tUnspportReads\t5primeSupportReads\t3primeSupportReads\tTSD\tConfidenceForSomaticInsertion\t5splicSiteSupportReads\t3spiceSiteSupportReads"} {print $0}'> ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.insertion.bed 
 awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,$4";"$5";"$7,0,$6}' ${PREFIX}.insertion.bed | sort -k1,1 -k2,2n > ${PREFIX}.t && bedToBigBed ${PREFIX}.t ${PREFIX}.tmp.chr.size ${PREFIX}.insertion.bb && rm ${PREFIX}.t
 
+# Fix 2p insertions to full length
+awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){te[$1]=$2}else{if($7=="2p"){split($4,a,",");$4="";for(i=1;i<=length(a);i++){split(a[i],b,":");$4=$4","b[1]":1:"te[b[1]]":"b[4]};$4=substr($4,2)};print $0}}' ${PREFIX}.tmp.te.size ${PREFIX}.insertion.bed > ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.insertion.bed
+
 # Clean tmp files
 $echo 2 "clean tmp files"
 ${BINDIR}/cleanTempFiles.sh ${PREFIX} ${CLEAN}
