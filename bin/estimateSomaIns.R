@@ -21,6 +21,6 @@ for(i in 1:dim(soma)[1]){
 }
 q95 = qpois(0.95, lamda)
 fo = cbind(soma, round(soma[,2]-lamda,2), soma[,2]-q95, round(lamda,2), q95)
-fo[which(fo[,6]<0),6] = 0
-fo[which(fo[,7]<0),7] = 0
+if(length(which(fo[,6]<0))>0){fo[which(fo[,6]<0),6] = 0}
+if(length(which(fo[,7]<0))>0){fo[which(fo[,7]<0),7] = 0}
 write.table(fo, Args[6], row.names=F, col.names=F, sep="\t", quote=F)
