@@ -236,17 +236,17 @@ awk '$7!="singleton"' ${PREFIX}.insertion.raw.bed > ${PREFIX}.t && mv ${PREFIX}.
 $echo 2 "filter candidate insertions in high depth region"
 bedtools random -g ${PREFIX}.tmp.chr.size -l 200 -n 1000 >${PREFIX}.tmp.random.bed
 REGIONS=`awk '{r=r" "$1":"$2"-"$3} END{print r}' ${PREFIX}.tmp.random.bed`
-AVE_DEPTH=`samtools view -bh -F 0X4 -@ 32 ${BAM} ${REGIONS} | bedtools bamtobed -i - | intersectBed -a - -b ${PREFIX}.tmp.random.bed -wo | awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){a[$10]++}else{s+=a[$4]}} END{print s/1000}' - ${PREFIX}.tmp.random.bed`
+AVE_DEPTH=`samtools view -bh -F 0X4 -@ ${CPU} ${BAM} ${REGIONS} | bedtools bamtobed -i - | intersectBed -a - -b ${PREFIX}.tmp.random.bed -wo | awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){a[$10]++}else{s+=a[$4]}} END{print s/1000}' - ${PREFIX}.tmp.random.bed`
 CTOF_DEPTH=`awk -v t=${AVE_DEPTH} 'BEGIN{print t*5}'` && $echo 3 "average read number for 200bp bins is ${AVE_DEPTH}, set read number cutoff to ${CTOF_DEPTH}"
 awk 'BEGIN{FS=OFS="\t"} {s=int(($2+$3)/2)-100;e=int(($2+$3)/2)+100;if(s<0){s=0};print $1,s,e,$1","$2","$3","$4","$6,0,"+"}' ${PREFIX}.insertion.raw.bed > ${PREFIX}.tmp
 awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3}' ${PREFIX}.tmp | sort -k1,1 -k2,2n | bedtools merge -i - > ${PREFIX}.t
 TN=(`wc -l ${PREFIX}.t`)
 if [ $TN -lt 50000 ];then
 	REGIONS=`awk 'BEGIN{FS=OFS="\t"} {printf $1":"$2"-"$3" "}' ${PREFIX}.t`
-	samtools view -bh -F 0X4 -@ 32 ${BAM} ${REGIONS} | bedtools bamtobed -i - | intersectBed -a - -b ${PREFIX}.tmp -wo | awk -v adp=${AVE_DEPTH} 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){a[$10]++}else{if(a[$1","$2","$3","$4","$6]/1<adp*5){print $0}}}' - ${PREFIX}.insertion.raw.bed > ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.insertion.raw.bed 
+	samtools view -bh -F 0X4 -@ ${CPU} ${BAM} ${REGIONS} | bedtools bamtobed -i - | intersectBed -a - -b ${PREFIX}.tmp -wo | awk -v adp=${AVE_DEPTH} 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){a[$10]++}else{if(a[$1","$2","$3","$4","$6]/1<adp*5){print $0}}}' - ${PREFIX}.insertion.raw.bed > ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.insertion.raw.bed 
 else
 	awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3}' ${PREFIX}.t > ${PREFIX}.tmp.region
-	samtools view -bh -F 0X4 -@ 32 -L ${PREFIX}.tmp.region ${BAM} | bedtools bamtobed -i - | intersectBed -a - -b ${PREFIX}.tmp -wo | awk -v adp=${AVE_DEPTH} 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){a[$10]++}else{if(a[$1","$2","$3","$4","$6]/1<adp*5){print $0}}}' - ${PREFIX}.insertion.raw.bed > ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.insertion.raw.bed 
+	samtools view -bh -F 0X4 -@ ${CPU} -L ${PREFIX}.tmp.region ${BAM} | bedtools bamtobed -i - | intersectBed -a - -b ${PREFIX}.tmp -wo | awk -v adp=${AVE_DEPTH} 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){a[$10]++}else{if(a[$1","$2","$3","$4","$6]/1<adp*5){print $0}}}' - ${PREFIX}.insertion.raw.bed > ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.insertion.raw.bed 
 fi
 RAWINS_FILTERDEPTH=(`wc -l ${PREFIX}.insertion.raw.bed`) && FILTERDEPTH=`expr ${RAWINS_FILTER1P1} - ${RAWINS_FILTERDEPTH}`
 $echo 3 "Filtered insertion number: ${RAWINS_UNFILTER} - ${FILTERRMSK} (overlap rmsk) ${FILTER1P1} (short insertion) - ${FILTERDEPTH} (high depth) = ${RAWINS_FILTERDEPTH}"

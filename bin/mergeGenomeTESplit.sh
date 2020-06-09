@@ -39,11 +39,11 @@ if($1~/^@/ || and($2,4)==4){next};
 		}
 	};
 }else{
-	bed[$4][1]=$1;bed[$4][2]=$2;bed[$4][3]=$3;bed[$4][4]=$4;bed[$4][5]=$6;
+	bed[$4,1]=$1;bed[$4,2]=$2;bed[$4,3]=$3;bed[$4,4]=$4;bed[$4,5]=$6;
 }}
 END{
 for(i in record){
-	if(record[i] && bed[i][1]){
-		print bed[i][1],bed[i][2],bed[i][3],bed[i][4],record[i],bed[i][5]
+	if(record[i] && bed[i,1]){
+		print bed[i,1],bed[i,2],bed[i,3],bed[i,4],record[i],bed[i,5]
 	}
 }}' $4 $1 $2

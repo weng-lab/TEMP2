@@ -235,17 +235,17 @@ RAWINS_FILTER1P1=(`wc -l ${PREFIX}.insertion.raw.bed`) && FILTER1P1=`expr ${RAWI
 $echo 2 "filter candidate insertions in high depth region"
 bedtools random -g ${PREFIX}.tmp.chr.size -l 200 -n 1000 >${PREFIX}.tmp.random.bed
 REGIONS=`awk '{r=r" "$1":"$2"-"$3} END{print r}' ${PREFIX}.tmp.random.bed`
-AVE_DEPTH=`samtools view -bh -F 0X4 -@ 32 ${BAM} ${REGIONS} | bedtools bamtobed -i - | intersectBed -a - -b ${PREFIX}.tmp.random.bed -wo | awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){a[$10]++}else{s+=a[$4]}} END{print s/1000}' - ${PREFIX}.tmp.random.bed`
+AVE_DEPTH=`samtools view -bh -F 0X4 -@ ${CPU} ${BAM} ${REGIONS} | bedtools bamtobed -i - | intersectBed -a - -b ${PREFIX}.tmp.random.bed -wo | awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){a[$10]++}else{s+=a[$4]}} END{print s/1000}' - ${PREFIX}.tmp.random.bed`
 CTOF_DEPTH=`awk -v t=${AVE_DEPTH} 'BEGIN{print t*5}'` && $echo 3 "average read number for 200bp bins is ${AVE_DEPTH}, set read number cutoff to ${CTOF_DEPTH}"
 awk 'BEGIN{FS=OFS="\t"} {s=int(($2+$3)/2)-100;e=int(($2+$3)/2)+100;if(s<0){s=0};print $1,s,e,$1","$2","$3","$4","$6,0,"+"}' ${PREFIX}.insertion.raw.bed > ${PREFIX}.tmp
 awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3}' ${PREFIX}.tmp | sort -k1,1 -k2,2n | bedtools merge -i - > ${PREFIX}.t
 TN=(`wc -l ${PREFIX}.t`)
 if [ $TN -lt 50000 ];then
 	REGIONS=`awk 'BEGIN{FS=OFS="\t"} {printf $1":"$2"-"$3" "}' ${PREFIX}.t`
-	samtools view -bh -F 0X4 -@ 32 ${BAM} ${REGIONS} | bedtools bamtobed -i - | intersectBed -a - -b ${PREFIX}.tmp -wo | awk -v adp=${AVE_DEPTH} 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){a[$10]++}else{if(a[$1","$2","$3","$4","$6]/1<adp*5){print $0}}}' - ${PREFIX}.insertion.raw.bed > ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.insertion.raw.bed 
+	samtools view -bh -F 0X4 -@ ${CPU} ${BAM} ${REGIONS} | bedtools bamtobed -i - | intersectBed -a - -b ${PREFIX}.tmp -wo | awk -v adp=${AVE_DEPTH} 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){a[$10]++}else{if(a[$1","$2","$3","$4","$6]/1<adp*5){print $0}}}' - ${PREFIX}.insertion.raw.bed > ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.insertion.raw.bed 
 else
 	awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3}' ${PREFIX}.t > ${PREFIX}.tmp.region
-	samtools view -bh -F 0X4 -@ 32 -L ${PREFIX}.tmp.region ${BAM} | bedtools bamtobed -i - | intersectBed -a - -b ${PREFIX}.tmp -wo | awk -v adp=${AVE_DEPTH} 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){a[$10]++}else{if(a[$1","$2","$3","$4","$6]/1<adp*5){print $0}}}' - ${PREFIX}.insertion.raw.bed > ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.insertion.raw.bed 
+	samtools view -bh -F 0X4 -@ ${CPU} -L ${PREFIX}.tmp.region ${BAM} | bedtools bamtobed -i - | intersectBed -a - -b ${PREFIX}.tmp -wo | awk -v adp=${AVE_DEPTH} 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){a[$10]++}else{if(a[$1","$2","$3","$4","$6]/1<adp*5){print $0}}}' - ${PREFIX}.insertion.raw.bed > ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.insertion.raw.bed 
 fi
 RAWINS_FILTERDEPTH=(`wc -l ${PREFIX}.insertion.raw.bed`) && FILTERDEPTH=`expr ${RAWINS_FILTER1P1} - ${RAWINS_FILTERDEPTH}`
 $echo 3 "Filtered insertion number: ${RAWINS_UNFILTER} - ${FILTERRMSK} (overlap rmsk) ${FILTER1P1} (short insertion) - ${FILTERDEPTH} (high depth) = ${RAWINS_FILTERDEPTH}"
@@ -256,7 +256,7 @@ awk -v ins=${INSERT} 'BEGIN{FS=OFS="\t"} {s1=1;e1=ins;if(e1>$2){e1=$2};e2=$2;s2=
 # remove spikes of singleton reads which are mapping bias
 awk '$7=="singleton"' ${PREFIX}.insertion.raw.bed | awk 'BEGIN{FS=OFS="\t"} {split($13,a,"|");for(i in a){split(a[i],b,",");print b[1],b[2],b[3],b[6],0,b[4],$0}}' > ${PREFIX}.tmp
 awk '$7!="singleton"' ${PREFIX}.insertion.raw.bed > ${PREFIX}.tmp1
-awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){for(i=$2;i<=$3;i++){if($6=="+"){a[$1][i]+=$4}else{b[$1][i]+=$4}}}else{for(i=1;i<=$2;i++){print $1,i,a[$1][i]/1,b[$1][i]/1}}}' ${PREFIX}.tmp ${PREFIX}.tmp.te.size > ${PREFIX}.singleton.cov
+awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){for(i=$2;i<=$3;i++){if($6=="+"){a[$1,i]+=$4}else{b[$1,i]+=$4}}}else{for(i=1;i<=$2;i++){print $1,i,a[$1,i]/1,b[$1,i]/1}}}' ${PREFIX}.tmp ${PREFIX}.tmp.te.size > ${PREFIX}.singleton.cov
 touch ${PREFIX}.spike.bed
 Rscript ${BINDIR}/despike.R ${PREFIX}.singleton.cov ${PREFIX}.spike.bed
 intersectBed -a ${PREFIX}.tmp -b ${PREFIX}.spike.bed -v -f 1 | cut -f 7-23 | cat - ${PREFIX}.tmp1 | sort -k1,1 -k2,2n > ${PREFIX}.insertion.raw.bed
@@ -269,7 +269,7 @@ $echo 2 "sam to bed and bedGraph, multiple mappers are divided by their map time
 samtools view -@ ${CPU} -bhS -F 0X4 -F 0X800 ${PREFIX}.transposon.sam | samtools sort -@ ${CPU} -o ${PREFIX}.transposon.bam -
 samtools index -@ ${CPU} ${PREFIX}.transposon.bam 
 mkdir ${PREFIX}.transposonMapping
-while read c1 c2; do samtools view -@ 32 ${PREFIX}.transposon.bam $c1 > ${PREFIX}.transposonMapping/${c1}.sam; done < ${PREFIX}.tmp.te.size
+while read c1 c2; do samtools view -@ ${CPU} ${PREFIX}.transposon.bam $c1 > ${PREFIX}.transposonMapping/${c1}.sam; done < ${PREFIX}.tmp.te.size
 for i in ${PREFIX}.transposonMapping/*sam; do echo -e "${BINDIR}/samToBdg.sh $i ${DIV} ${PREFIX}.tmp.te.size ${i%.sam} ${READ_LENGTH}" >> ${PREFIX}.parafile; done
 ${BINDIR}/ParaFly -c ${PREFIX}.parafile -CPU ${CPU} > /dev/null 2>&1
 cat ${PREFIX}.transposonMapping/*.sense.bdg | sort -k1,1 -k2,2n - > ${PREFIX}.tmp && ${BINDIR}/mergeOverlappedBdg ${PREFIX}.tmp > ${PREFIX}.transposon.sense.bdg 
