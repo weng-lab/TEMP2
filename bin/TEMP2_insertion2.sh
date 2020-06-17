@@ -77,8 +77,8 @@ done
 # check parameters #
 ####################
 [ $# -lt 1 ] && usage
-#([ -z ${LEFT} ] || [ -z ${RIGHT} ]) && $echo 0 "Error: read1.fq and read2.fq not specified. Exiting..." && exit 1 
-#([ ! -f ${LEFT} ] || [ ! -f ${RIGHT} ]) && $echo 0 "Error: cannot access read1.fq (${LEFT}) or read2.fq (${RIGHT}). Exiting..." && exit 1 
+([ -z ${LEFT} ] || [ -z ${RIGHT} ]) && $echo 0 "Error: read1.fq and read2.fq not specified. Exiting..." && exit 1 
+([ ! -f ${LEFT} ] || [ ! -f ${RIGHT} ]) && $echo 0 "Error: cannot access read1.fq (${LEFT}) or read2.fq (${RIGHT}). Exiting..." && exit 1 
 [ -z ${BAM} ] && [ -z ${INDEX} ] && $echo 0 "Error: map.bam or bwa_index not specified. Exiting..." && exit 1 
 [ ! -z ${BAM} ] && [ ! -f ${BAM} ] && $echo 0 "Error: cannot access map.bam (${BAM}). Exiting..." && exit 1 
 [ ! -z ${BAM} ] && [ ! -f ${BAM}.bai ] && $echo 0 "Error: map.bam (${BAM}) is not indexed, please index it using samtools index. Exiting..." && exit 1 
@@ -96,6 +96,7 @@ done
 [ ${INSERT} -gt 0 ] 2>/dev/null || INSERT=Y
 [ -z ${DIV%%*[!0-9.]*} ] && DIV=5
 [ -z ${MISMATCH%%*[!0-9.]*} ] && MISMATCH=2
+[ -z ${UNIQ_RATIO} ] && UNIQ_RATIO=0.8
 [ -z ${RMSK_WINDOW%%*[!0-9]*} ] && RMSK_WINDOW=300
 [ -z ${CLEAN} ] && CLEAN=p
 
