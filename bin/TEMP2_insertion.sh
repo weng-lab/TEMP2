@@ -10,7 +10,7 @@
 # usage #
 #########
 usage() {
-$echo 5 "Germline and somatic transposon insertion detection using short DNA-seq data."
+$echo 5 "Germline and de novo transposon insertion detection using short DNA-seq data."
 $echo 5 "Please send questions, suggestions and bug reports to yutianxiong@gmail.com."
 $echo 5 "Thank you for using it."
 $echo 5 "=============================================================================\n"
@@ -33,6 +33,8 @@ $echo 6 "\t-m mismatch%\tPercentage of mismatch allowed when mapping to TEs. Def
 $echo 6 "\t-U ratio\tThe ratio between the second best alignment and the best alignment to judge if a read is uniquely mapped. Default is 0.8."
 $echo 6 "\t-f frag_length\tFragment length of the library. Default is calculated based on the mapping result."
 $echo 6 "\t-N reference_filter_window\twindow sizea (+-n) for filtering insertions overlapping reference insertions. Default is 300."
+$echo 6 "\t-C frequency_cutoff\tUser defined frequency cutoff to determine if a insertion is de novo or germline. By default TEMP2 uses singleton insertions as de novo insertions becasue usually the sequencing depth is far less than number of genomes in the library. However, if you are sequencing limited genomes in your library, a self-defined frequency cutoff may be a better choice."
+$echo 6 "\t-T\t\tSet this parameter to allow truncated de novo insertions; For default, only full-length de novo insertions are allowed."
 $echo 6 "\t-L\t\tSet this parameter to use a looser criteria to filter reference annotated copy overlapped insertions; Default not allowed."
 $echo 6 "\t-S\t\tSet this parameter to skip insertion length checking; Default is to remove those insertions that are not full length of shorter than 500bp."
 $echo 6 "\t-c cpu_number\tNumber of CPU used. Default is 1."
@@ -45,7 +47,7 @@ exit 1
 ###################
 # read parameters #
 ###################
-while getopts "hl:r:i:c:f:m:M:o:R:t:N:g:dI:vp:U:LSA" OPTION
+while getopts "hl:r:i:c:f:m:M:o:R:t:N:g:dI:vp:U:C:LAST" OPTION
 do
         case $OPTION in
                 h)	usage && exit 1;;
@@ -65,9 +67,11 @@ do
 	        t)	RMSK=`readlink -f $OPTARG`;;
 		N)	RMSK_WINDOW=$OPTARG;;
 		d)	CLEAN=d;;
+		C)	FREQ_CUTOFF=$OPTARG;;
 		L)	LOOSE_OVERLAP=1;;
 		S)	SKIP_SHORT=1;;
 		A)	ALU_MODE=1;;
+		T)	TRUNCATED=1;;
 		v)	$echo 5 "\nTEMP2:\t\tVersion ${TEMP2_VERSION}\nConstruct time:\tApril 29, 2019\n" && exit 1;;
                 ?)	usage
         esac
@@ -251,7 +255,14 @@ RAWINS_FILTERDEPTH=(`wc -l ${PREFIX}.insertion.raw.bed`) && FILTERDEPTH=`expr ${
 $echo 3 "Filtered insertion number: ${RAWINS_UNFILTER} - ${FILTERRMSK} (overlap rmsk) ${FILTER1P1} (short insertion) - ${FILTERDEPTH} (high depth) = ${RAWINS_FILTERDEPTH}"
 
 # get end regions for each transposon
-awk -v ins=${INSERT} 'BEGIN{FS=OFS="\t"} {s1=1;e1=ins;if(e1>$2){e1=$2};e2=$2;s2=$2-ins+1;if(s2<1){s2=1};print $1,s1,e1,0,0,"-";print $1,s2,e2,0,0,"+"}' ${PREFIX}.tmp.te.size | sort -k1,1 -k2,2n - > ${PREFIX}.TPregion.bed
+if [ -z ${TRUNCATED} ];then
+	# only allow full-length de novo insertions
+	awk -v ins=${INSERT} 'BEGIN{FS=OFS="\t"} {s1=1;e1=ins;if(e1>$2){e1=$2};e2=$2;s2=$2-ins+1;if(s2<1){s2=1};print $1,s1,e1,0,0,"-";print $1,s2,e2,0,0,"+"}' ${PREFIX}.tmp.te.size | sort -k1,1 -k2,2n - > ${PREFIX}.TPregion.bed
+else
+	# allow botn full-length de novo insertions and truncated de novo insertions which is supported by enough reads (>=3 reads in both ends)
+	awk -v ins=${INSERT} 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){tel[$1]=$2}else{if(int(substr($10,2))>=3 && int(substr($11,2))>=3){s1=$8;e1=$8+ins-1;if(e1>$9 && s1<$9-50){e1=$9}else if(e1>tel[$4]){e1=tel[$4]};e2=$9;s2=$9-ins+1;if(s2<$8 && e2>$8+50){s2=$8}else if(s2<1){s2=1};print $4,s1,e1,0,0,"-";print $4,s2,e2,0,0,"+"}}}' ${PREFIX}.tmp.te.size ${PREFIX}.insertion.raw.bed | sort -k1,1 -k2,2n - | bedtools merge -i - -c 4,5,6 -s -o count,first,first > ${PREFIX}.tmp
+	awk -v ins=${INSERT} 'BEGIN{FS=OFS="\t"} {s1=1;e1=ins;if(e1>$2){e1=$2};e2=$2;s2=$2-ins+1;if(s2<1){s2=1};print $1,s1,e1,0,0,"-";print $1,s2,e2,0,0,"+"}' ${PREFIX}.tmp.te.size | cat - ${PREFIX}.tmp | sort -k1,1 -k2,2n - | bedtools merge -i - -c 4,5,6 -s -o sum,first,first > ${PREFIX}.TPregion.bed
+fi
 
 # remove spikes of singleton reads which are mapping bias
 awk '$7=="singleton"' ${PREFIX}.insertion.raw.bed | awk 'BEGIN{FS=OFS="\t"} {split($13,a,"|");for(i in a){split(a[i],b,",");print b[1],b[2],b[3],b[6],0,b[4],$0}}' > ${PREFIX}.tmp
@@ -278,8 +289,8 @@ cat ${PREFIX}.transposonMapping/*.anti.bdg | sort -k1,1 -k2,2n - > ${PREFIX}.tmp
 awk '$6=="-"' ${PREFIX}.spike.bed | intersectBed -a ${PREFIX}.transposon.anti.bdg -b - -v -f 1 > ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.transposon.anti.bdg 
 cat ${PREFIX}.transposonMapping/*.bed | intersectBed -a - -b ${PREFIX}.spike.bed -v -f 1 > ${PREFIX}.transposon.bed
 
-# Estimate somatic insertion number for each transposon
-$echo 2 "estimate somatic insertion number for each transposon"
+# Estimate de novo insertion number for each transposon
+$echo 2 "estimate de novo insertion number for each transposon"
 awk '$7=="singleton"' ${PREFIX}.insertion.raw.bed | awk 'BEGIN{FS=OFS="\t"} {split($13,a,"|");for(i in a){split(a[i],b,",");print b[1],b[2],b[3],b[6],0,b[4]}}' > ${PREFIX}.tmp
 intersectBed -a ${PREFIX}.tmp -b ${PREFIX}.TPregion.bed -s -f 1 -wo | awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){all[$1","$6]+=$4}else if(ARGIND==2){rg[$7","$8","$9","$12]+=$4}else{print $1,$2,$3,rg[$1","$2","$3","$6]/1,all[$1","$6]/1,$6}}' ${PREFIX}.tmp - ${PREFIX}.TPregion.bed > ${PREFIX}.tmp1
 intersectBed -a ${PREFIX}.transposon.bed -b ${PREFIX}.TPregion.bed -s -f 1 -wo | awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){all[$1","$6]+=$4}else if(ARGIND==2){rg[$7","$8","$9","$12]+=$4}else{print $1,$2,$3,$4,$5,$6,rg[$1","$2","$3","$6]/1,all[$1","$6]/1}}' ${PREFIX}.transposon.bed - ${PREFIX}.tmp1 > ${PREFIX}.tmp && rm ${PREFIX}.tmp1
@@ -323,8 +334,20 @@ else
 fi
 intersectBed -a ${PREFIX}.tmp -b ${PREFIX}.tmp.bed -f 1 -c | awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){p[$4]=$7}else{n=$1","$2","$3","$4","$6;print $1,$2,$3,$4,int(1000*$5/(p[n]*2+$5))/1000,$6,$7,$8,$9,$5,p[n],substr($10,2),substr($11,2),$12,$13,$16,$17}}' - ${PREFIX}.insertion.filtered.bed > ${PREFIX}.insertion.bed
 
+# If -C is enabled, estimate de novo insertion rate using the frequency cutoff
+if [ ! -z ${FREQ_CUTOFF} ];then
+	$echo 2 "-C is enabled, estimate de novo insertion rate using the frequency cutoff"
+	awk -v ct=${FREQ_CUTOFF} '$5<ct' ${PREFIX}.insertion.bed | awk 'BEGIN{FS=OFS="\t"} {split($4,a,",");for(i in a){split(a[i],b,":");print b[1],b[2],b[3],$8,0,b[4]}}' > ${PREFIX}.tmp
+	intersectBed -a ${PREFIX}.tmp -b ${PREFIX}.TPregion.bed -s -f 1 -wo | awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){all[$1","$6]+=$4}else if(ARGIND==2){rg[$7","$8","$9","$12]+=$4}else{print $1,$2,$3,rg[$1","$2","$3","$6]/1,all[$1","$6]/1,$6}}' ${PREFIX}.tmp - ${PREFIX}.TPregion.bed > ${PREFIX}.tmp1
+	intersectBed -a ${PREFIX}.transposon.bed -b ${PREFIX}.TPregion.bed -s -f 1 -wo | awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){all[$1","$6]+=$4}else if(ARGIND==2){rg[$7","$8","$9","$12]+=$4}else{print $1,$2,$3,$4,$5,$6,rg[$1","$2","$3","$6]/1,all[$1","$6]/1}}' ${PREFIX}.transposon.bed - ${PREFIX}.tmp1 > ${PREFIX}.tmp && rm ${PREFIX}.tmp1
+	awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){sp[$1]+=$4;gp[$1]+=$7;if(!a[$1$6]){a[$1$6]=1;sa[$1]+=$5;ga[$1]+=$8}}else{if(!k[$1]){k[$1]=1;print $1,sp[$1],sa[$1]-sp[$1],gp[$1],ga[$1]-gp[$1]}}}' ${PREFIX}.tmp ${PREFIX}.tmp > ${PREFIX}.soma.rate.bed 
+	${BINDIR}/estimateSomaIns.R ${PREFIX}.soma.rate.bed 
+	awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){if($4==0){p[$1]=0}else{p[$1]=$8/$4}}else{tf=$4-p[$1]*$7;if(tf<0){tf=0};if($6=="+"){as[$1]+=tf}else{aa[$1]+=tf}}} END{for(i in as){if((as[i]+1)/(aa[i]+1)<1/8 || (as[i]+1)/(aa[i]+1)>8){print i}}}' ${PREFIX}.soma.rate.bed ${PREFIX}.tmp > ${PREFIX}.t
+	awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){a[$1]=1}else if(ARGIND==2){b[$1]=$2}else{st="pass";if(b[$1]<500){st="short"};if(a[$1]){st="imbalance"};print $0,st}}' ${PREFIX}.t ${PREFIX}.tmp.te.size ${PREFIX}.soma.rate.bed > ${PREFIX}.tt && mv ${PREFIX}.tt ${PREFIX}.soma.rate.bed 
+fi
+
 # Get TSD, remove redundant insertions and recalculate soma rate
-$echo 2 "get TSD, remove redundant insertions and recalculate somatic insertion rate"
+$echo 2 "get TSD, remove redundant insertions and recalculate de novo insertion rate"
 awk 'BEGIN{FS=OFS="\t"} {if($14!="unknown"){split($14,a,":");split(a[2],b,"-");print a[1],b[1],b[2],NR,0,"."}}' ${PREFIX}.insertion.bed | bedtools getfasta -fi ${GENOME} -bed - -fo ${PREFIX}.tmp -name
 awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){if(NR%2==1){i=substr($1,2)}else{seq[i]=$0}}else{if(seq[FNR]){$14=toupper(seq[FNR])};print $0}}' ${PREFIX}.tmp ${PREFIX}.insertion.bed  | awk 'BEGIN{FS=OFS="\t"} {if($2==$3){$3=$3+1};print $0}' | ${BINDIR}/removeRedundantIns.sh - | awk 'BEGIN{FS=OFS="\t";print "#Chr\tStart\tEnd\tTransposon:Start:End:Strand\tFrequency\tStrand\tType\tSupportReads\tUnspportReads\t5primeSupportReads\t3primeSupportReads\tTSD\tConfidenceForSomaticInsertion\t5splicSiteSupportReads\t3spiceSiteSupportReads"} {print $0}'> ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.insertion.bed 
 awk 'BEGIN{FS=OFS="\t"} {if($7=="singleton"){split($4,a,",");for(i in a){split(a[i],b,":");if($10>0 && b[4]=="+"){st="-"}else if($10>0 && b[4]=="-"){st="+"}else if(b[4]=="+"){st="+"}else{st="-"};if(b[2]<=b[3]){print b[1],b[2],b[3],0,$8/length(a),st}else{print b[1],b[3],b[2],0,$8/length(a),st}}}}' ${PREFIX}.insertion.bed > ${PREFIX}.tmp.bed
@@ -334,7 +357,7 @@ awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){if(NR>1){if($4==0){a[$1]=0}else{a[$1]=int
 awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,$4";"$5";"$7,0,$6}' ${PREFIX}.insertion.bed | sort -k1,1 -k2,2n > ${PREFIX}.t && bedToBigBed ${PREFIX}.t ${PREFIX}.tmp.chr.size ${PREFIX}.insertion.bb && rm ${PREFIX}.t
 
 # Calculate soma rate per genome based on the depth around singleton insertion sites
-$echo 2 "calculate somatic insertion rate per genome"
+$echo 2 "calculate de novo insertion rate per genome"
 AD=`awk '{if(NR>1 && $7=="singleton"){a1+=($8+2*$9);a2++}} END{if(!a2){print 1}else{print a1/a2}}' ${PREFIX}.insertion.bed`
 awk -v ad=$AD 'BEGIN{FS=OFS="\t"} {if(NR==1){$1=$1"\testimatedSomaticInsertionNumberPerGenome\t95percentileSomaticInsertionNumberPerGenome";print $0}else{printf "%s\t%.5f\t%.5f\t",$1,$2/ad,$3/ad;print $2,$3,$4,$5,$6,$7,$8}}' ${PREFIX}.soma.summary.txt > ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.soma.summary.txt
 

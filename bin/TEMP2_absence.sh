@@ -11,7 +11,7 @@ usage() {
 echo -en "\e[1;36m"
 cat <<EOF
 
-usage: $0 -i input_file.sorted.bam -s scripts_directory -o output_directory -r transposon_rpmk.bed -t reference.2bit -f fragment_size -c CPUs -h 
+usage: $0 -i input_file.sorted.bam -o output_directory -r transposon_rmsk.bed -t reference.2bit -f fragment_size -c CPUs -h 
 
 TEMP is a software package for detecting transposable elements (TEs) 
 insertions and excisions from pooled high-throughput sequencing data. 
