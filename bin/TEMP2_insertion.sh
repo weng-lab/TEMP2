@@ -33,7 +33,7 @@ $echo 6 "\t-m mismatch%\tPercentage of mismatch allowed when mapping to TEs. Def
 $echo 6 "\t-U ratio\tThe ratio between the second best alignment and the best alignment to judge if a read is uniquely mapped. Default is 0.8."
 $echo 6 "\t-f frag_length\tFragment length of the library. Default is calculated based on the mapping result."
 $echo 6 "\t-N reference_filter_window\twindow sizea (+-n) for filtering insertions overlapping reference insertions. Default is 300."
-$echo 6 "\t-C read_cutoff\tLess than how many supporting reads should TEMP2 regard a insertion as poteintial de novo insertion. By default TEMP2 uses singleton insertions (1 supporting read) as de novo insertions becasue usually the sequencing depth is far less than number of genomes in the library. However, if you are sequencing limited genomes in your library, a self-defined cutoff may be a better choice."
+$echo 6 "\t-C frequency_cutoff\tLower than which frequency should TEMP2 regard a insertion as poteintial de novo insertion. By default TEMP2 uses singleton insertions (1 supporting read) as de novo insertions becasue usually the sequencing depth is far less than number of genomes in the library. However, if you are sequencing limited genomes in your library, a self-defined cutoff may be a better choice."
 $echo 6 "\t-T\t\tSet this parameter to allow truncated de novo insertions; For default, only full-length de novo insertions are allowed."
 $echo 6 "\t-L\t\tSet this parameter to use a looser criteria to filter reference annotated copy overlapped insertions; Default not allowed."
 $echo 6 "\t-S\t\tSet this parameter to skip insertion length checking; Default is to remove those insertions that are not full length of shorter than 500bp."
@@ -67,7 +67,7 @@ do
 	        t)	RMSK=`readlink -f $OPTARG`;;
 		N)	RMSK_WINDOW=$OPTARG;;
 		d)	CLEAN=d;;
-		C)	READ_CUTOFF=$OPTARG;;
+		C)	FREQ_CUTOFF=$OPTARG;;
 		L)	LOOSE_OVERLAP=1;;
 		S)	SKIP_SHORT=1;;
 		A)	ALU_MODE=1;;
@@ -290,13 +290,14 @@ awk '$6=="-"' ${PREFIX}.spike.bed | intersectBed -a ${PREFIX}.transposon.anti.bd
 cat ${PREFIX}.transposonMapping/*.bed | intersectBed -a - -b ${PREFIX}.spike.bed -v -f 1 > ${PREFIX}.transposon.bed
 
 # Estimate de novo insertion number for each transposon
-if [ -z ${READ_CUTOFF} ];then
+if [ -z ${FREQ_CUTOFF} ];then
 	$echo 2 "estimate de novo insertion number for each transposon using singleton reads"
 	awk '$7=="singleton"' ${PREFIX}.insertion.raw.bed | awk 'BEGIN{FS=OFS="\t"} {split($13,a,"|");for(i in a){split(a[i],b,",");print b[1],b[2],b[3],b[6],0,b[4]}}' > ${PREFIX}.tmp
 else
 	# If -C is enabled, estimate de novo insertion rate using the frequency cutoff
-	$echo 2 "-C is enabled, estimate de novo insertion rate using the insertions with less than "${FREQ_CUTOFF}" supporting reads"
-	awk -v ct=${READ_CUTOFF} '$5<ct' ${PREFIX}.insertion.raw.bed | awk 'BEGIN{FS=OFS="\t"} {split($13,a,"|");for(i in a){split(a[i],b,",");print b[1],b[2],b[3],b[6],0,b[4]}}' > ${PREFIX}.tmp
+	$echo 2 "-C is enabled, estimate de novo insertion rate using the insertions with less than "${FREQ_CUTOFF}" estimated frequency"
+	READ_CUTOFF=`awk -v ad=${AVE_DEPTH} -v fc=${FREQ_CUTOFF} 'BEGIN{print int(ad*2*fc)+1}'`
+	awk -v ct=${READ_CUTOFF} '$5<=ct' ${PREFIX}.insertion.raw.bed | awk 'BEGIN{FS=OFS="\t"} {split($13,a,"|");for(i in a){split(a[i],b,",");print b[1],b[2],b[3],b[6],0,b[4]}}' > ${PREFIX}.tmp
 fi
 intersectBed -a ${PREFIX}.tmp -b ${PREFIX}.TPregion.bed -s -f 1 -wo | awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){all[$1","$6]+=$4}else if(ARGIND==2){rg[$7","$8","$9","$12]+=$4}else{print $1,$2,$3,rg[$1","$2","$3","$6]/1,all[$1","$6]/1,$6}}' ${PREFIX}.tmp - ${PREFIX}.TPregion.bed > ${PREFIX}.tmp1
 intersectBed -a ${PREFIX}.transposon.bed -b ${PREFIX}.TPregion.bed -s -f 1 -wo | awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){all[$1","$6]+=$4}else if(ARGIND==2){rg[$7","$8","$9","$12]+=$4}else{print $1,$2,$3,$4,$5,$6,rg[$1","$2","$3","$6]/1,all[$1","$6]/1}}' ${PREFIX}.transposon.bed - ${PREFIX}.tmp1 > ${PREFIX}.tmp && rm ${PREFIX}.tmp1
@@ -344,7 +345,7 @@ intersectBed -a ${PREFIX}.tmp -b ${PREFIX}.tmp.bed -f 1 -c | awk 'BEGIN{FS=OFS="
 $echo 2 "get TSD, remove redundant insertions and recalculate de novo insertion rate"
 awk 'BEGIN{FS=OFS="\t"} {if($14!="unknown"){split($14,a,":");split(a[2],b,"-");print a[1],b[1],b[2],NR,0,"."}}' ${PREFIX}.insertion.bed | bedtools getfasta -fi ${GENOME} -bed - -fo ${PREFIX}.tmp -name
 awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){if(NR%2==1){i=substr($1,2)}else{seq[i]=$0}}else{if(seq[FNR]){$14=toupper(seq[FNR])};print $0}}' ${PREFIX}.tmp ${PREFIX}.insertion.bed  | awk 'BEGIN{FS=OFS="\t"} {if($2==$3){$3=$3+1};print $0}' | ${BINDIR}/removeRedundantIns.sh - | awk 'BEGIN{FS=OFS="\t";print "#Chr\tStart\tEnd\tTransposon:Start:End:Strand\tFrequency\tStrand\tType\tSupportReads\tUnspportReads\t5primeSupportReads\t3primeSupportReads\tTSD\tConfidenceForSomaticInsertion\t5splicSiteSupportReads\t3spiceSiteSupportReads"} {print $0}'> ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.insertion.bed 
-if [ -z ${READ_CUTOFF} ];then
+if [ -z ${FREQ_CUTOFF} ];then
 	awk 'BEGIN{FS=OFS="\t"} {if($7=="singleton"){split($4,a,",");for(i in a){split(a[i],b,":");if($10>0 && b[4]=="+"){st="-"}else if($10>0 && b[4]=="-"){st="+"}else if(b[4]=="+"){st="+"}else{st="-"};if(b[2]<=b[3]){print b[1],b[2],b[3],0,$8/length(a),st}else{print b[1],b[3],b[2],0,$8/length(a),st}}}}' ${PREFIX}.insertion.bed > ${PREFIX}.tmp.bed
 	intersectBed -b ${PREFIX}.tmp.bed -a ${PREFIX}.TPregion.bed -wo -s -F 1 | awk 'BEGIN{FS=OFS="\t"} {n=$1;if(ARGIND==1){a[n]+=$11}else{$6=a[n]-$8;$7=a[n]-$9;if($6<0){$6=0};if($7<0){$7=0};print $0}}' - ${PREFIX}.soma.rate.bed > ${PREFIX}.tmp
 	awk 'BEGIN{FS=OFS="\t"} {a1[$1]+=$6;a2[$1]+=$7;a3[$1]+=$2;a4[$1]=$3;a5[$1]+=$4;a6[$1]=$5;a7[$1]=$10} END{print "#transposonName\testimatedSomaticInsertionNumber\t95percentileSomaticInsertionNumber\tsingletonReadsInTrueTransposonAnchorRegion\tsingletonReadsInFalseTransposonAnchorRegion\treadsInTrueTransposonAnchorRegion\treadsInFalseTransposonAnchorRegion\tfilterStatus";for(i in a1){print i,a1[i],a2[i],a3[i],a4[i],a5[i],a6[i],a7[i]}}' ${PREFIX}.tmp > ${PREFIX}.soma.summary.txt
