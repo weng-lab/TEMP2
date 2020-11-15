@@ -96,7 +96,7 @@ Options:
 	-U ratio	The ratio between the second best alignment and the best alignment to judge if a read is uniquely mapped. Default is 0.8.
 	-f frag_length	Fragment length of the library. Default is calculated based on the mapping result.
 	-N reference_filter_window	window sizea (+-n) for filtering insertions overlapping reference insertions. Default is 300.
-	-C read_cutoff	Less than how many supporting reads should TEMP2 regard a insertion as poteintial de novo insertion. By default TEMP2 uses singleton insertions (1 supporting read) as de novo insertions becasue usually the sequencing depth is far less than number of genomes in the library. However, if you are sequencing limited genomes in your library, a self-defined cutoff may be a better choice.
+	-C frequency_cutoff	Lower than which frequency should TEMP2 regard a insertion as poteintial de novo insertion. By default TEMP2 uses singleton insertions (1 supporting read) as de novo insertions becasue usually the sequencing depth is far less than number of genomes in the library. However, if you are sequencing limited genomes in your library, a self-defined cutoff may be a better choice.
 	-T		Set this parameter to allow truncated de novo insertions; For default, only full-length de novo insertions are allowed.
 	-L		Set this parameter to use a looser criteria to filter reference annotated copy overlapped insertions; Default not allowed.
 	-S		Set this parameter to skip insertion length checking; Default is to remove those insertions that are not full length of shorter than 500bp.
@@ -184,6 +184,9 @@ For transposon absence analysis, the summay output file remains exactly the same
 **Column 9**: Estimated population frequency of the detected absence event.  
   
 ## Release information
+**TEMP2-v0.1.3**
+1. Change -C from self-defined read cutoff to self-defined frequency cutoff.
+
 **TEMP2-v0.1.2**:
 1. By default, TEMP2 hypothesize that de novo insertions that are derived during individual development is full-length. However, a few transposons does have truncated insertions, such as 5' truncated L1 elements. Now, users can use the option -T to allow truncated de novo insertions. In this option, TEMP2 will firstly mark those truncated insertions that are supported by at least 3 reads at both ends. Then marked truncated insertions together with full-length insertions are used by TEMP2 for estimating de novo insertion numbers.
 2. Usually, Illumina DNA sequencing or other short-read DNA sequencing takes about or more than 10,000 genomes during library construction. Considering the seqeuncing depth is much lower than 10,000X, de novo insertions which only occurs in one or few genomes are only supported by one read. Therefore, TEMP2 regard singleton reads as potential de novo insertions by default. However, if a special library with limited number of genomes (for example: 50) is used during library constrcution, de novo insertions can be supported by more than one read, known as 2p or 1p1 insertions. In this situation, users can add a self-defined supporting-read cutoff using option "-C cutoff" to determine if a insertion is potential de novo insertion. For example, if 50 genomes are used in library construction and the seqeuncing depth is 50X (100bp paired reads, 400bp fragmnent length), the number of supporting reads for a de novo insertion should be around  (fragment_length/read_length/2*depth*2/number_of_genome=400/100/2*50*2/50=4), and you can set -C 7 for a more accurate de novo insertion estimation.
