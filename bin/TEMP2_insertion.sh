@@ -33,7 +33,8 @@ $echo 6 "\t-m mismatch%\tPercentage of mismatch allowed when mapping to TEs. Def
 $echo 6 "\t-U ratio\tThe ratio between the second best alignment and the best alignment to judge if a read is uniquely mapped. Default is 0.8."
 $echo 6 "\t-f frag_length\tFragment length of the library. Default is calculated based on the mapping result."
 $echo 6 "\t-N reference_filter_window\twindow sizea (+-n) for filtering insertions overlapping reference insertions. Default is 300."
-$echo 6 "\t-C frequency_cutoff\tLower than which frequency should TEMP2 regard a insertion as poteintial de novo insertion. By default TEMP2 uses singleton insertions (1 supporting read) as de novo insertions becasue usually the sequencing depth is far less than number of genomes in the library. However, if you are sequencing limited genomes in your library, a self-defined cutoff may be a better choice."
+$echo 6 "\t-G number_of_genome\tSuggested when you are sequencing limited genomes in your library.i TEMP2 need this to set a reasonable cutoff to define potential de novo insertions."
+$echo 6 "\t-C frequency_cutoff\tLower than which frequency should TEMP2 regard a insertion as poteintial de novo insertion. By default TEMP2 uses singleton insertions (1 supporting read) as de novo insertions becasue usually the sequencing depth is far less than number of genomes in the library. If -G is set, TEMP2 uses 2-fold of theoretically frequency of de novo insertions as cutoff. However,you can always set a self-defined frequency cutoff to seprate de novo and germline insertions."
 $echo 6 "\t-T\t\tSet this parameter to allow truncated de novo insertions; For default, only full-length de novo insertions are allowed."
 $echo 6 "\t-L\t\tSet this parameter to use a looser criteria to filter reference annotated copy overlapped insertions; Default not allowed."
 $echo 6 "\t-S\t\tSet this parameter to skip insertion length checking; Default is to remove those insertions that are not full length of shorter than 500bp."
@@ -47,7 +48,7 @@ exit 1
 ###################
 # read parameters #
 ###################
-while getopts "hl:r:i:c:f:m:M:o:R:t:N:g:dI:vp:U:C:LAST" OPTION
+while getopts "hl:r:i:c:f:m:M:o:R:t:N:g:dI:vp:U:G:C:LAST" OPTION
 do
         case $OPTION in
                 h)	usage && exit 1;;
@@ -67,12 +68,13 @@ do
 	        t)	RMSK=`readlink -f $OPTARG`;;
 		N)	RMSK_WINDOW=$OPTARG;;
 		d)	CLEAN=d;;
+		G)	N_GENOME=$OPTARG;;
 		C)	FREQ_CUTOFF=$OPTARG;;
 		L)	LOOSE_OVERLAP=1;;
 		S)	SKIP_SHORT=1;;
 		A)	ALU_MODE=1;;
 		T)	TRUNCATED=1;;
-		v)	$echo 5 "\nTEMP2:\t\tVersion ${TEMP2_VERSION}\nConstruct time:\tApril 29, 2019\n" && exit 1;;
+		v)	$echo 5 "\nTEMP2:\t\tVersion ${TEMP2_VERSION}\nConstruct time:\tDec 21, 2020\n" && exit 1;;
                 ?)	usage
         esac
 done
@@ -103,6 +105,8 @@ done
 [ -z ${UNIQ_RATIO} ] && UNIQ_RATIO=0.8
 [ -z ${RMSK_WINDOW%%*[!0-9]*} ] && RMSK_WINDOW=300
 [ -z ${CLEAN} ] && CLEAN=p
+
+[ -z ${FREQ_CUTOFF} ] && [ ! -z ${N_GENOME} ] && FREQ_CUTOFF=`awk -v ng=${N_GENOME} 'BEGIN{printf "%.10f", 2/ng}'` && echo0 3 "${N_GENOME} genomes in the library, the frequency is set to ${FREQ_CUTOFF} automatically."
 
 ######################
 # check dependencies #

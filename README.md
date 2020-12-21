@@ -96,7 +96,8 @@ Options:
 	-U ratio	The ratio between the second best alignment and the best alignment to judge if a read is uniquely mapped. Default is 0.8.
 	-f frag_length	Fragment length of the library. Default is calculated based on the mapping result.
 	-N reference_filter_window	window sizea (+-n) for filtering insertions overlapping reference insertions. Default is 300.
-	-C frequency_cutoff	Lower than which frequency should TEMP2 regard a insertion as poteintial de novo insertion. By default TEMP2 uses singleton insertions (1 supporting read) as de novo insertions becasue usually the sequencing depth is far less than number of genomes in the library. However, if you are sequencing limited genomes in your library, a self-defined cutoff may be a better choice.
+	-G number_of_genome	Suggested when you are sequencing limited genomes in your library.i TEMP2 need this to set a reasonable cutoff to define potential de novo insertions.
+	-C frequency_cutoff	Lower than which frequency should TEMP2 regard a insertion as poteintial de novo insertion. By default TEMP2 uses singleton insertions (1 supporting read) as de novo insertions becasue usually the sequencing depth is far less than number of genomes in the library. If -G is set, TEMP2 uses 2-fold of theoretically frequency of de novo insertions as cutoff. However,you can always set a self-defined frequency cutoff to seprate de novo and germline insertions.
 	-T		Set this parameter to allow truncated de novo insertions; For default, only full-length de novo insertions are allowed.
 	-L		Set this parameter to use a looser criteria to filter reference annotated copy overlapped insertions; Default not allowed.
 	-S		Set this parameter to skip insertion length checking; Default is to remove those insertions that are not full length of shorter than 500bp.
@@ -184,6 +185,9 @@ For transposon absence analysis, the summay output file remains exactly the same
 **Column 9**: Estimated population frequency of the detected absence event.  
   
 ## Release information
+**TEMP2-v0.1.4**
+1. Add -G for users to input number of genomes used in the library and TEMP2 can automatically choose threshold to detect potential de novo insertions.
+
 **TEMP2-v0.1.3**
 1. Change -C from self-defined read cutoff to self-defined frequency cutoff.
 
