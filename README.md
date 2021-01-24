@@ -1,6 +1,4 @@
-<img src="image/TEMP2_logo.png" alt="TEMP2" width="150" height="150"/>
-TEMP2
-=====
+<img src="image/TEMP2_logo.png" alt="TEMP2" width="200" height="200"/>
    
 ## Overview   
 TEMP2 is an algorithm for detecting transposon insertions using short-read whole-genome sequencing data. It can not only precisely detect germline transposon insertions, but also estimate the number of uninherited/somatic transposon insertions by removing artificial insertion introduced by chimeric reads.
