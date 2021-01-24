@@ -1,4 +1,4 @@
-![](image/TEMP2_logo.png)
+<img src="image/TEMP2_logo.png" alt="TEMP2" width="150" height="150"/>
 TEMP2
 =====
    
