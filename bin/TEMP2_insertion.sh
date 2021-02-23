@@ -234,7 +234,7 @@ awk '$7=="1p1"' ${PREFIX}.insertion.raw.bed | bedtools window -w 50 -a - -b ${PR
 RAWINS_FILTERRMSK=(`wc -l ${PREFIX}.t`) && FILTERRMSK=`expr ${RAWINS_UNFILTER} - ${RAWINS_FILTERRMSK}`
 # filter false positive 1p1 insertions which are not full length but short than 500bp 
 if [ ${SKIP_SHORT} ];then
-	awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){tel[$1]=$2}else{if($7=="1p1"){if(tel[$4]>500 || ($9-$8)>=500){print $0}}else{print $0}}}' ${PREFIX}.tmp.te.size ${PREFIX}.t | sort -k1,1 -k2,2n > ${PREFIX}.insertion.raw.bed 
+	awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){tel[$1]=$2}else{if($7=="1p1"){if(tel[$4]<=500 || ($9-$8)>=500){print $0}}else{print $0}}}' ${PREFIX}.tmp.te.size ${PREFIX}.t | sort -k1,1 -k2,2n > ${PREFIX}.insertion.raw.bed 
 else
 	cat ${PREFIX}.t | sort -k1,1 -k2,2n > ${PREFIX}.insertion.raw.bed 
 fi

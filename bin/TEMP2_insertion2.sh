@@ -34,7 +34,7 @@ $echo 6 "\t-U ratio\tThe ratio between the second best alignment and the best al
 $echo 6 "\t-f frag_length\tFragment length of the library. Default is calculated based on the mapping result."
 $echo 6 "\t-N reference_filter_window\twindow sizea (+-n) for filtering insertions overlapping reference insertions. Default is 300."
 $echo 6 "\t-L\t\tSet this parameter to use a looser criteria to filter reference annotated copy overlapped insertions; Default not allowed."
-$echo 6 "\t-S\t\tSet this parameter to skip insertion length checking; Default is to remove those insertions that are not full length of shorter than 500bp."
+$echo 6 "\t-S\t\tSet this parameter to skip insertion length checking; Default is to remove those insertions that are not full length and shorter than 500bp."
 $echo 6 "\t-c cpu_number\tNumber of CPU used. Default is 1."
 $echo 6 "\t-d\t\tSet this parameter to delete tmp files. Default is moving them to folder tmpTEMP2."
 $echo 6 "\t-h\t\tShow this message."
@@ -225,7 +225,7 @@ awk '$7!="1p1"' ${PREFIX}.insertion.raw.bed | bedtools window -w 50 -a - -b ${PR
 awk '$7=="1p1"' ${PREFIX}.insertion.raw.bed | bedtools window -w 50 -a - -b ${PREFIX}.removed.1p1.bed -v >> ${PREFIX}.t
 RAWINS_FILTERRMSK=(`wc -l ${PREFIX}.t`) && FILTERRMSK=`expr ${RAWINS_UNFILTER} - ${RAWINS_FILTERRMSK}`
 # filter false positive 1p1 insertions which are not full length but short than 500bp 
-if [ -z ${SKIP_SHORT} ];then
+if [ ${SKIP_SHORT} ];then
 	awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){tel[$1]=$2}else{if($7=="1p1"){if(tel[$4]<=500 || ($9-$8)>=500){print $0}}else{print $0}}}' ${PREFIX}.tmp.te.size ${PREFIX}.t | sort -k1,1 -k2,2n > ${PREFIX}.insertion.raw.bed
 else
 	cat ${PREFIX}.t | sort -k1,1 -k2,2n > ${PREFIX}.insertion.raw.bed
