@@ -99,7 +99,7 @@ Options:
 	-C frequency_cutoff	Lower than which frequency should TEMP2 regard a insertion as poteintial de novo insertion. By default TEMP2 uses singleton insertions (1 supporting read) as de novo insertions becasue usually the sequencing depth is far less than number of genomes in the library. If -G is set, TEMP2 uses 2-fold of theoretically frequency of de novo insertions as cutoff. However,you can always set a self-defined frequency cutoff to seprate de novo and germline insertions.
 	-T		Set this parameter to allow truncated de novo insertions; For default, only full-length de novo insertions are allowed.
 	-L		Set this parameter to use a looser criteria to filter reference annotated copy overlapped insertions; Default not allowed.
-	-S		Set this parameter to skip insertion length checking; Default is to remove those insertions that are not full length of shorter than 500bp.
+	-S		Set this parameter to perform insertion length checking; Default is to reserve those insertions that are not full length of shorter than 500bp.
 	-c cpu_number	Number of CPU used. Default is 1.
 	-d		Set this parameter to delete tmp files. Default is moving them to folder tmpTEMP2.
 	-h		Show this message.
