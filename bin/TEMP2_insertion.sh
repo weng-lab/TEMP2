@@ -37,7 +37,7 @@ $echo 6 "\t-G number_of_genome\tSuggested when you are sequencing limited genome
 $echo 6 "\t-C frequency_cutoff\tLower than which frequency should TEMP2 regard a insertion as poteintial de novo insertion. By default TEMP2 uses singleton insertions (1 supporting read) as de novo insertions becasue usually the sequencing depth is far less than number of genomes in the library. If -G is set, TEMP2 uses 2-fold of theoretically frequency of de novo insertions as cutoff. However,you can always set a self-defined frequency cutoff to seprate de novo and germline insertions."
 $echo 6 "\t-T\t\tSet this parameter to allow truncated de novo insertions; For default, only full-length de novo insertions are allowed."
 $echo 6 "\t-L\t\tSet this parameter to use a looser criteria to filter reference annotated copy overlapped insertions; Default not allowed."
-$echo 6 "\t-S\t\tSet this parameter to skip insertion length checking; Default is to remove those insertions that are not full length of shorter than 500bp."
+$echo 6 "\t-S\t\tSet this parameter to perform insertion length checking; Default is to reserve those insertions that are not full length of shorter than 500bp."
 $echo 6 "\t-c cpu_number\tNumber of CPU used. Default is 1."
 $echo 6 "\t-d\t\tSet this parameter to delete tmp files. Default is moving them to folder tmpTEMP2."
 $echo 6 "\t-h\t\tShow this message."

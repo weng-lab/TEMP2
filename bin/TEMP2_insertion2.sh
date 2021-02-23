@@ -34,7 +34,7 @@ $echo 6 "\t-U ratio\tThe ratio between the second best alignment and the best al
 $echo 6 "\t-f frag_length\tFragment length of the library. Default is calculated based on the mapping result."
 $echo 6 "\t-N reference_filter_window\twindow sizea (+-n) for filtering insertions overlapping reference insertions. Default is 300."
 $echo 6 "\t-L\t\tSet this parameter to use a looser criteria to filter reference annotated copy overlapped insertions; Default not allowed."
-$echo 6 "\t-S\t\tSet this parameter to skip insertion length checking; Default is to remove those insertions that are not full length and shorter than 500bp."
+$echo 6 "\t-S\t\tSet this parameter to perform insertion length checking; Default is to reserve those insertions that are not full length and shorter than 500bp."
 $echo 6 "\t-c cpu_number\tNumber of CPU used. Default is 1."
 $echo 6 "\t-d\t\tSet this parameter to delete tmp files. Default is moving them to folder tmpTEMP2."
 $echo 6 "\t-h\t\tShow this message."
