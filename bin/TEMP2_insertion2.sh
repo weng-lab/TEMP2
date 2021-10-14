@@ -143,13 +143,13 @@ else
 	$echo 2 "get concordant-uniq-edge-split reads"
 	samtools view -@ ${CPU} -h -f 0X2 -F 0X800 ${BAM} | awk -v uniq_ratio=${UNIQ_RATIO} 'BEGIN{FS=OFS="\t"} {for(i=12;i<=100;i++){if($i~/AS:i:/){as=substr($i,6)};if($i~/XS:i:/){xs=substr($i,6);break}};if(xs/1<as*uniq_ratio){print $0}}' - | grep "SA:Z:" | awk '(and($2,16)==0 && $6~/^[0-9]+S/) || (and($2,16)==16 && $6~/S$/)' - | cat ${PREFIX}.tmp.header - | samtools view -@ ${CPU} -bhS - | samtools sort -@ ${CPU} -o ${PREFIX}.pair.uniq.split.bam -
 	samtools fastq -@ ${CPU} ${PREFIX}.pair.uniq.split.bam | awk '{if(NR%4==1){print substr($1,1,length($1)-2)"_"substr($1,length($1))}else{print $0}}' - > ${PREFIX}.pair.uniq.split.fastq 
-	bedtools bamtobed -i ${PREFIX}.pair.uniq.split.bam -tag NM | awk -v div=${MISMATCH} 'BEGIN{FS=OFS="\t"} {$4=substr($4,1,length($4)-2)"_"substr($4,length($4));$6=$6=="+"?"-":"+";if($5<=(int(($3-$2-1)*div/100)+1)){print $0}}' - > ${PREFIX}.pair.uniq.split.bed
+	bedtools bamtobed -i ${PREFIX}.pair.uniq.split.bam -tag NM | awk -v div=${MISMATCH} 'BEGIN{FS=OFS="\t"} {$4=substr($4,1,length($4)-2)"_"substr($4,length($4));$6=$6=="+"?"-":"+";if($5<=(int(($3-$2-1)*div/100)+1)){if($6=="+"){$6="-"}else{$6="+"};print $0}}' - > ${PREFIX}.pair.uniq.split.bed
 	if [ ${ALU_MODE} ];then
 		$echo 2 "ALU mode enabled, also get concordant-uniq-internal-split reads"
 		samtools view -@ ${CPU} -h -f 0X2 -F 0X800 ${BAM} | awk -v uniq_ratio=${UNIQ_RATIO} 'BEGIN{FS=OFS="\t"} {for(i=12;i<=100;i++){if($i~/AS:i:/){as=substr($i,6)};if($i~/XS:i:/){xs=substr($i,6);break}};if(xs/1<as*uniq_ratio){print $0}}' - | grep "SA:Z:" | awk '(and($2,16)==16 && $6~/^[0-9]+S/) || (and($2,16)==0 && $6~/S$/)' - | cat ${PREFIX}.tmp.header - | samtools view -@ ${CPU} -bhS - | samtools sort -@ ${CPU} -o ${PREFIX}.pair.uniq.split.internal.bam -
 		samtools fastq -@ ${CPU} ${PREFIX}.pair.uniq.split.internal.bam | awk 'BEGIN{FS=OFS="\t"} {if(NR%4==1){print substr($1,1,length($1)-2)"_"substr($1,length($1))}else{print $0}}' - > ${PREFIX}.tmp
 		${BINDIR}/revertFq.sh ${PREFIX}.tmp >> ${PREFIX}.pair.uniq.split.fastq 
-		bedtools bamtobed -i ${PREFIX}.pair.uniq.split.internal.bam -tag NM | awk -v div=${MISMATCH} 'BEGIN{FS=OFS="\t"} {$4=substr($4,1,length($4)-2)"_"substr($4,length($4));if($5<=(int(($3-$2-1)*div/100)+1)){print $0}}' - >> ${PREFIX}.pair.uniq.split.bed
+		bedtools bamtobed -i ${PREFIX}.pair.uniq.split.internal.bam -tag NM | awk -v div=${MISMATCH} 'BEGIN{FS=OFS="\t"} {$4=substr($4,1,length($4)-2)"_"substr($4,length($4));if($5<=(int(($3-$2-1)*div/100)+1)){if($6=="+"){$6="-"}else{$6="+"};print $0}}' - >> ${PREFIX}.pair.uniq.split.bed
 	fi
 fi
 
