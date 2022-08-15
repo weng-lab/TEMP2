@@ -38,6 +38,7 @@ $echo 6 "\t-C frequency_cutoff\tLower than which frequency should TEMP2 regard a
 $echo 6 "\t-T\t\tSet this parameter to allow truncated de novo insertions; For default, only full-length de novo insertions are allowed."
 $echo 6 "\t-L\t\tSet this parameter to use a looser criteria to filter reference annotated copy overlapped insertions; Default not allowed."
 $echo 6 "\t-S\t\tSet this parameter to perform insertion length checking; Default is to reserve those insertions that are not full length of shorter than 500bp."
+$echo 6 "\t-k\t\tSet this parameter to retain those singleton insertions with FDR equals to 0; Default is to remove them."
 $echo 6 "\t-c cpu_number\tNumber of CPU used. Default is 1."
 $echo 6 "\t-d\t\tSet this parameter to delete tmp files. Default is moving them to folder tmpTEMP2."
 $echo 6 "\t-h\t\tShow this message."
@@ -48,7 +49,7 @@ exit 1
 ###################
 # read parameters #
 ###################
-while getopts "hl:r:i:c:f:m:M:o:R:t:N:g:dI:vp:U:G:C:LAST" OPTION
+while getopts "hl:r:i:c:f:m:M:o:R:t:N:g:dI:vp:U:G:C:LASTk" OPTION
 do
         case $OPTION in
                 h)	usage && exit 1;;
@@ -74,6 +75,7 @@ do
 		S)	SKIP_SHORT=1;;
 		A)	ALU_MODE=1;;
 		T)	TRUNCATED=1;;
+		k)	RETAIN_FP=1;;
 		v)	$echo 5 "\nTEMP2:\t\tVersion ${TEMP2_VERSION}\nConstruct time:\tDec 21, 2020\n" && exit 1;;
                 ?)	usage
         esac
@@ -356,7 +358,11 @@ if [ -z ${FREQ_CUTOFF} ];then
 else
 	awk 'BEGIN{FS=OFS="\t"} {a1[$1]+=$6;a2[$1]+=$7;a3[$1]+=$2;a4[$1]=$3;a5[$1]+=$4;a6[$1]=$5;a7[$1]=$10} END{print "#transposonName\testimatedSomaticInsertionNumber\t95percentileSomaticInsertionNumber\tsingletonReadsInTrueTransposonAnchorRegion\tsingletonReadsInFalseTransposonAnchorRegion\treadsInTrueTransposonAnchorRegion\treadsInFalseTransposonAnchorRegion\tfilterStatus";for(i in a1){print i,a1[i],a2[i],a3[i],a4[i],a5[i],a6[i],a7[i]}}' ${PREFIX}.soma.rate.bed > ${PREFIX}.soma.summary.txt
 fi
-awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){if(NR>1){if($4==0){a[$1]=0}else{a[$1]=int($2/$4*10000)/100}}}else{if($7=="singleton"){split($4,k,":");if(a[k[1]]>0){$13=a[k[1]];print $0}}else{if($13=="100%"){$13=100};print $0}}}' ${PREFIX}.soma.summary.txt ${PREFIX}.insertion.bed | awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){a[$1]=$2}else{if($1!~/^#/){if($2>=a[$1]){$2=a[$1]-1};if($3>a[$1]){$3=a[$1]}};print $0}}' ${PREFIX}.tmp.chr.size - | awk 'BEGIN{FS=OFS="\t"} {if(NR>1){if($6=="-"){a=$11;$11=$10;$10=a;a=$15;$15=$14;$14=a}};print $0}' - > ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.insertion.bed 
+if [ -z ${RETAIN_FP} ];then
+	awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){if(NR>1){if($4==0){a[$1]=0}else{a[$1]=int($2/$4*10000)/100}}}else{if($7=="singleton"){split($4,k,":");if(a[k[1]]>0){$13=a[k[1]];print $0}}else{if($13=="100%"){$13=100};print $0}}}' ${PREFIX}.soma.summary.txt ${PREFIX}.insertion.bed | awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){a[$1]=$2}else{if($1!~/^#/){if($2>=a[$1]){$2=a[$1]-1};if($3>a[$1]){$3=a[$1]}};print $0}}' ${PREFIX}.tmp.chr.size - | awk 'BEGIN{FS=OFS="\t"} {if(NR>1){if($6=="-"){a=$11;$11=$10;$10=a;a=$15;$15=$14;$14=a}};print $0}' - > ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.insertion.bed 
+else
+	awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){if(NR>1){if($4==0){a[$1]=0}else{a[$1]=int($2/$4*10000)/100}}}else{if($7=="singleton"){split($4,k,":");if(1>0){$13=a[k[1]];print $0}}else{if($13=="100%"){$13=100};print $0}}}' ${PREFIX}.soma.summary.txt ${PREFIX}.insertion.bed | awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){a[$1]=$2}else{if($1!~/^#/){if($2>=a[$1]){$2=a[$1]-1};if($3>a[$1]){$3=a[$1]}};print $0}}' ${PREFIX}.tmp.chr.size - | awk 'BEGIN{FS=OFS="\t"} {if(NR>1){if($6=="-"){a=$11;$11=$10;$10=a;a=$15;$15=$14;$14=a}};print $0}' - > ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.insertion.bed 
+fi
 awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,$4";"$5";"$7,0,$6}' ${PREFIX}.insertion.bed | sort -k1,1 -k2,2n > ${PREFIX}.t && bedToBigBed ${PREFIX}.t ${PREFIX}.tmp.chr.size ${PREFIX}.insertion.bb && rm ${PREFIX}.t
 
 # Calculate soma rate per genome based on the depth around singleton insertion sites
