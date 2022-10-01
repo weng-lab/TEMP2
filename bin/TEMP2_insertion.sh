@@ -198,7 +198,7 @@ bash $BINDIR/mergeGenomeTEUnpair.sh ${PREFIX}.unpair.uniq.transposon.sam ${PREFI
 ${BINDIR}/fixLTR.sh ${PREFIX}.pair.uniq.split.transposon.bed > ${PREFIX}.pair.uniq.split.transposon.fixLTR.bed
 ${BINDIR}/fixLTR.sh ${PREFIX}.unpair.uniq.transposon.bed > ${PREFIX}.unpair.uniq.transposon.fixLTR.bed
 ${BINDIR}/faToChromSize ${GENOME} > ${PREFIX}.tmp.chr.size
-cat ${PREFIX}.unpair.uniq.transposon.fixLTR.bed ${PREFIX}.pair.uniq.split.transposon.fixLTR.bed | awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,$5,0,$6}' | sort -k1,1 -k2,2n > ${PREFIX}.t && bedToBigBed ${PREFIX}.t ${PREFIX}.tmp.chr.size ${PREFIX}.supportReadsUnfiltered.bb && rm ${PREFIX}.t
+cat ${PREFIX}.unpair.uniq.transposon.fixLTR.bed ${PREFIX}.pair.uniq.split.transposon.fixLTR.bed | awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,$5,0,$6}' | sort -k1,1 -k2,2n > ${PREFIX}.t && ${BINDIR}/bedToBigBed ${PREFIX}.t ${PREFIX}.tmp.chr.size ${PREFIX}.supportReadsUnfiltered.bb && rm ${PREFIX}.t
 
 # Merge supporting reads within insert size - read length and in the same direction
 $echo 2 "merge support reads in the same direction within ${INSERT} - ${READ_LENGTH}"
@@ -363,7 +363,7 @@ if [ -z ${RETAIN_FP} ];then
 else
 	awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){if(NR>1){if($4==0){a[$1]=0}else{a[$1]=int($2/$4*10000)/100}}}else{if($7=="singleton"){split($4,k,":");if(a[k[1]]>=0){$13=a[k[1]];print $0}}else{if($13=="100%"){$13=100};print $0}}}' ${PREFIX}.soma.summary.txt ${PREFIX}.insertion.bed | awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){a[$1]=$2}else{if($1!~/^#/){if($2>=a[$1]){$2=a[$1]-1};if($3>a[$1]){$3=a[$1]}};print $0}}' ${PREFIX}.tmp.chr.size - | awk 'BEGIN{FS=OFS="\t"} {if(NR>1){if($6=="-"){a=$11;$11=$10;$10=a;a=$15;$15=$14;$14=a}};print $0}' - > ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.insertion.bed 
 fi
-awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,$4";"$5";"$7,0,$6}' ${PREFIX}.insertion.bed | sort -k1,1 -k2,2n > ${PREFIX}.t && bedToBigBed ${PREFIX}.t ${PREFIX}.tmp.chr.size ${PREFIX}.insertion.bb && rm ${PREFIX}.t
+awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,$4";"$5";"$7,0,$6}' ${PREFIX}.insertion.bed | sort -k1,1 -k2,2n > ${PREFIX}.t && ${BINDIR}/bedToBigBed ${PREFIX}.t ${PREFIX}.tmp.chr.size ${PREFIX}.insertion.bb && rm ${PREFIX}.t
 
 # Calculate soma rate per genome based on the depth around singleton insertion sites
 $echo 2 "calculate de novo insertion rate per genome"

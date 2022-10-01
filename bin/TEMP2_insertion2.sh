@@ -188,7 +188,7 @@ bash $BINDIR/mergeGenomeTEUnpair.sh ${PREFIX}.unpair.uniq.transposon.sam ${PREFI
 ${BINDIR}/fixLTR.sh ${PREFIX}.pair.uniq.split.transposon.bed > ${PREFIX}.pair.uniq.split.transposon.fixLTR.bed
 ${BINDIR}/fixLTR.sh ${PREFIX}.unpair.uniq.transposon.bed > ${PREFIX}.unpair.uniq.transposon.fixLTR.bed
 ${BINDIR}/faToChromSize ${GENOME} > ${PREFIX}.tmp.chr.size
-cat ${PREFIX}.unpair.uniq.transposon.fixLTR.bed ${PREFIX}.pair.uniq.split.transposon.fixLTR.bed | awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,$5,0,$6}' | sort -k1,1 -k2,2n > ${PREFIX}.t && bedToBigBed ${PREFIX}.t ${PREFIX}.tmp.chr.size ${PREFIX}.supportReadsUnfiltered.bb && rm ${PREFIX}.t
+cat ${PREFIX}.unpair.uniq.transposon.fixLTR.bed ${PREFIX}.pair.uniq.split.transposon.fixLTR.bed | awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,$5,0,$6}' | sort -k1,1 -k2,2n > ${PREFIX}.t && ${BINDIR}/bedToBigBed ${PREFIX}.t ${PREFIX}.tmp.chr.size ${PREFIX}.supportReadsUnfiltered.bb && rm ${PREFIX}.t
 
 # Merge supporting reads within insert size - read length and in the same direction
 $echo 2 "merge support reads in the same direction within ${INSERT} - ${READ_LENGTH}"
@@ -284,7 +284,7 @@ intersectBed -a ${PREFIX}.tmp -b ${PREFIX}.tmp.bed -f 1 -c | awk 'BEGIN{FS=OFS="
 $echo 2 "get TSD, remove redundant insertions and recalculate somatic insertion rate"
 awk 'BEGIN{FS=OFS="\t"} {if($14!="unknown"){split($14,a,":");split(a[2],b,"-");print a[1],b[1],b[2],NR,0,"."}}' ${PREFIX}.insertion.bed | bedtools getfasta -fi ${GENOME} -bed - -fo ${PREFIX}.tmp -name
 awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){if(NR%2==1){i=substr($1,2)}else{seq[i]=$0}}else{if(seq[FNR]){$14=toupper(seq[FNR])};print $0}}' ${PREFIX}.tmp ${PREFIX}.insertion.bed  | awk 'BEGIN{FS=OFS="\t"} {if($2==$3){$3=$3+1};print $0}' | ${BINDIR}/removeRedundantIns.sh - | awk 'BEGIN{FS=OFS="\t";print "#Chr\tStart\tEnd\tTransposon:Start:End:Strand\tFrequency\tStrand\tType\tSupportReads\tUnspportReads\t5primeSupportReads\t3primeSupportReads\tTSD\tConfidenceForSomaticInsertion\t5splicSiteSupportReads\t3spiceSiteSupportReads"} {print $0}'> ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.insertion.bed 
-awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,$4";"$5";"$7,0,$6}' ${PREFIX}.insertion.bed | sort -k1,1 -k2,2n > ${PREFIX}.t && bedToBigBed ${PREFIX}.t ${PREFIX}.tmp.chr.size ${PREFIX}.insertion.bb && rm ${PREFIX}.t
+awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,$4";"$5";"$7,0,$6}' ${PREFIX}.insertion.bed | sort -k1,1 -k2,2n > ${PREFIX}.t && ${BINDIR}/bedToBigBed ${PREFIX}.t ${PREFIX}.tmp.chr.size ${PREFIX}.insertion.bb && rm ${PREFIX}.t
 
 # Fix 2p insertions to full length
 awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){te[$1]=$2}else{if($7=="2p"){split($4,a,",");$4="";for(i=1;i<=length(a);i++){split(a[i],b,":");$4=$4","b[1]":1:"te[b[1]]":"b[4]};$4=substr($4,2)};print $0}}' ${PREFIX}.tmp.te.size ${PREFIX}.insertion.bed > ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.insertion.bed
