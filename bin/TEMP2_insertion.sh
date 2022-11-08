@@ -215,7 +215,7 @@ done
 # Merge supporting reads within 2 * insert size - read length and in direction + then -
 $echo 2 "merge support reads in different direction within 2 X ${INSERT} - ${READ_LENGTH}"
 for i in ${PREFIX}.supportReads/*.processed.bed; do ${BINDIR}/mergeProcessedBed.sh $i $INSERT $READ_LENGTH ${i%.processed.bed}; done
-cat ${PREFIX}.supportReads/*.final.bed > ${PREFIX}.final.bed
+find ${PREFIX}.supportReads/ -type f -name "*.final.bed" -exec cat {} + > ${PREFIX}.final.bed
 
 # filter false positive insertions which overlap with the same transposon insertion annotation or in high depth region
 $echo 2 "filter candidate insertions which overlap with the same transposon insertion or in high depth region"
@@ -289,11 +289,11 @@ mkdir ${PREFIX}.transposonMapping
 while read c1 c2; do samtools view -@ ${CPU} ${PREFIX}.transposon.bam $c1 > ${PREFIX}.transposonMapping/${c1}.sam; done < ${PREFIX}.tmp.te.size
 for i in ${PREFIX}.transposonMapping/*sam; do echo -e "${BINDIR}/samToBdg.sh $i ${DIV} ${PREFIX}.tmp.te.size ${i%.sam} ${READ_LENGTH}" >> ${PREFIX}.parafile; done
 ${BINDIR}/ParaFly -c ${PREFIX}.parafile -CPU ${CPU} > /dev/null 2>&1
-cat ${PREFIX}.transposonMapping/*.sense.bdg | sort -k1,1 -k2,2n - > ${PREFIX}.tmp && ${BINDIR}/mergeOverlappedBdg ${PREFIX}.tmp > ${PREFIX}.transposon.sense.bdg 
+find ${PREFIX}.transposonMapping/ -type f -name "*.sense.bdg" -exec cat {} + | sort -k1,1 -k2,2n - > ${PREFIX}.tmp && ${BINDIR}/mergeOverlappedBdg ${PREFIX}.tmp > ${PREFIX}.transposon.sense.bdg 
 awk '$6=="+"' ${PREFIX}.spike.bed | intersectBed -a ${PREFIX}.transposon.sense.bdg -b - -v -f 1 > ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.transposon.sense.bdg 
-cat ${PREFIX}.transposonMapping/*.anti.bdg | sort -k1,1 -k2,2n - > ${PREFIX}.tmp && ${BINDIR}/mergeOverlappedBdg ${PREFIX}.tmp > ${PREFIX}.transposon.anti.bdg 
+find ${PREFIX}.transposonMapping/ -type f -name "*.anti.bdg" -exec cat {} + | sort -k1,1 -k2,2n - > ${PREFIX}.tmp && ${BINDIR}/mergeOverlappedBdg ${PREFIX}.tmp > ${PREFIX}.transposon.anti.bdg 
 awk '$6=="-"' ${PREFIX}.spike.bed | intersectBed -a ${PREFIX}.transposon.anti.bdg -b - -v -f 1 > ${PREFIX}.t && mv ${PREFIX}.t ${PREFIX}.transposon.anti.bdg 
-cat ${PREFIX}.transposonMapping/*.bed | intersectBed -a - -b ${PREFIX}.spike.bed -v -f 1 > ${PREFIX}.transposon.bed
+find ${PREFIX}.transposonMapping/ -type f -name "*.bed" -exec cat {} + | intersectBed -a - -b ${PREFIX}.spike.bed -v -f 1 > ${PREFIX}.transposon.bed
 
 # Estimate de novo insertion number for each transposon
 if [ -z ${FREQ_CUTOFF} ];then
