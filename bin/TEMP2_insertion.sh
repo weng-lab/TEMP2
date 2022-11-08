@@ -121,7 +121,7 @@ $echo 6 "Testing required softwares:"
 checkTools "bwa"
 checkTools "samtools"
 checkTools "bedtools"
-checkTools "bedops"
+# checkTools "bedops"
 
 ##################
 # Start pipeline #

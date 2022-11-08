@@ -14,12 +14,10 @@ If you have any questions or find any bugs please contact Tianxiong Yu through y
 ## Requirements   
 * Linux x86_64 systems.
 * Perl package [BioPerl](https://bioperl.org/) is needed for running **absence** module.
-* Other third-party tools that have already pre-compiled and included with TEMP2. However, you may need later versions of [zlib](https://zlib.net/) and [glibc](https://www.gnu.org/software/libc/) installed, especially to get samtools and bedtools work. If TEMP2 output errors for any of the softwares below, you may need to install and have them in your PATH.
+* Although other third-party tools have already pre-compiled and included with TEMP2. You may want to have them installed in your environment to avoid dependency errors, especially samtools (>=v1.9), bedtools, abd bwa.
 	* [bwa](http://bio-bwa.sourceforge.net/bwa.shtml)
 	* [samtools](http://www.htslib.org/)
 	* [bedtools](https://bedtools.readthedocs.io/en/latest/)
-	* [bedops](https://bedops.readthedocs.io/en/latest/)
-	* ParaFly from [trinity](https://github.com/trinityrnaseq/trinityrnaseq/wiki)   
    
 ## Installation
 With [git](https://git-scm.com/downloads) installed, simply type the following command to install **TEMP2**:
