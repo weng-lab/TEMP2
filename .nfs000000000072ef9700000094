@@ -3,7 +3,7 @@ BINDIR=$(dirname `readlink -f $0`) && export BINDIR=${BINDIR}/bin
 export echo="${BINDIR}/echo0"
 
 # version #
-export TEMP2_VERSION=0.1.6
+export TEMP2_VERSION=0.1.4
 
 # usage #
 usage (){
