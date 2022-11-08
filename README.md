@@ -14,9 +14,9 @@ If you have any questions or find any bugs please contact Tianxiong Yu through y
 ## Requirements   
 * Linux x86_64 systems.
 * Perl package [BioPerl](https://bioperl.org/) is needed for running **absence** module.
-* Although other third-party tools have already pre-compiled and included with TEMP2. You may want to have them installed in your environment to avoid dependency errors, especially samtools (>=v1.9), bedtools, abd bwa.
+* Although other third-party tools have already pre-compiled and included with TEMP2, you may want to have them installed in your environment to avoid dependency errors.
 	* [bwa](http://bio-bwa.sourceforge.net/bwa.shtml)
-	* [samtools](http://www.htslib.org/)
+	* [samtools](http://www.htslib.org/) (>=v1.9)
 	* [bedtools](https://bedtools.readthedocs.io/en/latest/)
    
 ## Installation
