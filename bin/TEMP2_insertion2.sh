@@ -205,7 +205,7 @@ done
 # Merge supporting reads within 2 * insert size - read length and in direction + then -
 $echo 2 "merge support reads in different direction within 2 X ${INSERT} - ${READ_LENGTH}"
 for i in ${PREFIX}.supportReads/*.processed.bed; do ${BINDIR}/mergeProcessedBed.sh $i $INSERT $READ_LENGTH ${i%.processed.bed}; done
-cat ${PREFIX}.supportReads/*.final.bed > ${PREFIX}.final.bed
+find ${PREFIX}.supportReads/ -type f -name "*.final.bed" -exec cat {} + > ${PREFIX}.final.bed
 
 # filter false positive insertions which overlap with the same transposon insertion annotation or in high depth region
 $echo 2 "filter candidate insertions which overlap with the same transposon insertion or in high depth region"
