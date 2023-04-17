@@ -1,6 +1,0 @@
-@HD	VN:1.6	SO:coordinate
-@SQ	SN:chr2L	LN:23513712
-@PG	ID:bwa	PN:bwa	VN:0.7.12-r1044	CL:bwa mem -t 2 /data/tusers.ds/yutianx/tongji2/piRNA/TEMP2/codes/TEMP2/test/bwa_index/chr2L /data/tusers.ds/yutianx/tongji2/piRNA/TEMP2/codes/TEMP2/test/test.1.fastq.gz /data/tusers.ds/yutianx/tongji2/piRNA/TEMP2/codes/TEMP2/test/test.2.fastq.gz
-@PG	ID:samtools	PN:samtools	PP:bwa	VN:1.10	CL:samtools view -bhS -@ 2 test.sam
-@PG	ID:samtools.1	PN:samtools	PP:samtools	VN:1.10	CL:samtools sort -@ 2 -o test.sorted.bam test.bam
-@PG	ID:samtools.2	PN:samtools	PP:samtools.1	VN:1.10	CL:samtools view -H test.sorted.bam
