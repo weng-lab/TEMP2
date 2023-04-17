@@ -5,7 +5,7 @@ if [ $# -lt 3 ];then
 	exit 1
 fi
 
-awk -v ins=$2 -v rl=$3 'BEGIN{FS=OFS="\t"}
+gawk -v ins=$2 -v rl=$3 'BEGIN{FS=OFS="\t"}
 {
 	if($3-$2<30){next};
 	if(ins*2>rl){ext=ins-rl}else{ext=0};

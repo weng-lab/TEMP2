@@ -6,7 +6,7 @@ if [ $# -lt 1 ];then
 	exit 1
 fi
 
-awk '
+gawk '
 BEGIN{
 	FS=OFS="\t";
 	a["A"]="T";a["T"]="A";a["C"]="G";a["G"]="C"

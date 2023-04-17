@@ -7,7 +7,7 @@ if [ $# -lt 4 ];then
 fi
 
 
-awk -v cr=$3 -v p=$4 'BEGIN{FS=OFS="\t";srand()}
+gawk -v cr=$3 -v p=$4 'BEGIN{FS=OFS="\t";srand()}
 {
 	if(ARGIND==1){
 		i=int((FNR-1)/4+1);

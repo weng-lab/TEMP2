@@ -114,9 +114,9 @@ fi
 
 #Detect excision sites
 [ ! -f $i.unpair.sam ] && samtools view -@ ${CPU} -F 0x2 $name > $i.unpair.sam
-awk -F "\t" '{OFS="\t"; if ($9 != 0) print $0}' $i.unpair.sam > temp1.sam
+gawk -F "\t" '{OFS="\t"; if ($9 != 0) print $0}' $i.unpair.sam > temp1.sam
 perl $BINDIR/pickUniqIntervalPos.pl temp1.sam $INSERT > $i.unproper.uniq.interval.bed
-awk 'BEGIN{FS=OFS="\t"} {print $0,0,"+"}' $i.unproper.uniq.interval.bed > temp && mv temp $i.unproper.uniq.interval.bed
+gawk 'BEGIN{FS=OFS="\t"} {print $0,0,"+"}' $i.unproper.uniq.interval.bed > temp && mv temp $i.unproper.uniq.interval.bed
 
 rm temp1.sam
 

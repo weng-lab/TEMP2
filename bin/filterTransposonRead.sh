@@ -5,7 +5,7 @@ if [ $# -lt 3 ];then
 	exit 1
 fi
 
-awk -v inst=${INSERT} 'BEGIN{FS=OFS="\t"} \
+gawk -v inst=${INSERT} 'BEGIN{FS=OFS="\t"} \
 	{if(ARGIND==1){t[$1]=$2}\
 	else{\
 		rl=$3-$2;split($5,n,";");\

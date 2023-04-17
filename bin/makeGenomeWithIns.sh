@@ -6,13 +6,13 @@ if [ $# -lt 2 ];then
 	echo -e "the script will randomly insert all the sequences in insertion.tab(1st column name, 2nd column insert times, 3rd column sequence) to genome.fa\n"
 	exit 1
 fi
-#N=`awk '{s+=$2} END{print s}' $3`
+#N=`gawk '{s+=$2} END{print s}' $3`
 #if [ $# -lt 4 ];then
-#	bedtools random -l 1 -n $N -g $2 | awk 'BEGIN{FS=OFS="\t";tn=0} {if(ARGIND==1){a[FNR]=$0}else{for(i=1;i<=$2;i++){tn++;print a[tn],$1}}}' - $3 | sort -k1,1 -k2,2n | intersectBed -a - -b $5 -v > $4.bed
+#	bedtools random -l 1 -n $N -g $2 | gawk 'BEGIN{FS=OFS="\t";tn=0} {if(ARGIND==1){a[FNR]=$0}else{for(i=1;i<=$2;i++){tn++;print a[tn],$1}}}' - $3 | sort -k1,1 -k2,2n | intersectBed -a - -b $5 -v > $4.bed
 #else
-#	bedtools random -l 1 -n $N -g $2 | awk 'BEGIN{FS=OFS="\t";tn=0} {if(ARGIND==1){a[FNR]=$0}else{for(i=1;i<=$2;i++){tn++;print a[tn],$1}}}' - $3 | sort -k1,1 -k2,2n > $4.bed
+#	bedtools random -l 1 -n $N -g $2 | gawk 'BEGIN{FS=OFS="\t";tn=0} {if(ARGIND==1){a[FNR]=$0}else{for(i=1;i<=$2;i++){tn++;print a[tn],$1}}}' - $3 | sort -k1,1 -k2,2n > $4.bed
 #fi
-awk 'BEGIN{FS=OFS="\t";nc["A"]="T";nc["T"]="A";nc["C"]="G";nc["G"]="C"} 
+gawk 'BEGIN{FS=OFS="\t";nc["A"]="T";nc["T"]="A";nc["C"]="G";nc["G"]="C"} 
 {
 	if(ARGIND==1){
 		ts[$1]=$3

@@ -60,7 +60,7 @@ for my $i (0..$#a) {
 
 	    system("bedtools intersect -a tmp -b $ARGV[1] -f 0.1 -wo -s > tmp1");
 	    if ($ARGV[2] eq "") {
-		system("awk -F \"\\t\" '{OFS=\"\\t\"; if ((\$4==\$13)&&(\$6==\$15)) print \$1,\$2,\$3,\$4,\$5,\$6}' tmp1 > tmp2");
+		system("gawk -F \"\\t\" '{OFS=\"\\t\"; if ((\$4==\$13)&&(\$6==\$15)) print \$1,\$2,\$3,\$4,\$5,\$6}' tmp1 > tmp2");
 	    }
 	    else {
 		my %family=();

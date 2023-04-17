@@ -5,7 +5,7 @@ if [ $# -lt 1 ];then
 	exit 1
 fi
 
-awk 'BEGIN{FS=OFS="\t"}
+gawk 'BEGIN{FS=OFS="\t"}
 {
 	st=$6==$8?"-":"+";
 	if($6=="+-"){tp="1p1"}else if($15~/\|/){tp="2p"}else{tp="singleton"};

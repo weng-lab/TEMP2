@@ -6,4 +6,4 @@ if [ $# -lt 1 ];then
 	exit 1
 fi
 
-awk 'BEGIN{FS=OFS="\t"} {if($1!~/^#/){split($4,a,",");for(i in a){split(a[i],b,":");print $1,$2,$3,b[1],$5/length(a),b[4],$7,$13}}}' $1
+gawk 'BEGIN{FS=OFS="\t"} {if($1!~/^#/){split($4,a,",");for(i in a){split(a[i],b,":");print $1,$2,$3,b[1],$5/length(a),b[4],$7,$13}}}' $1

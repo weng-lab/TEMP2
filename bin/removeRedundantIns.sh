@@ -7,7 +7,7 @@ if  [ $# -lt 1 ];then
 	exit 1
 fi
 
-sort -k1,1 -k2,2n $1 | bedtools merge -d 50 -i - -c 2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17 -delim "|" -o collapse | awk 'BEGIN{
+sort -k1,1 -k2,2n $1 | bedtools merge -d 50 -i - -c 2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17 -delim "|" -o collapse | gawk 'BEGIN{
 FS=OFS="\t";
 "#Chr\tStart\tEnd\tTransposon:Start:End:Strand\tFrequency\tStrand\tType\tSupportReads\tUnspportReads\t5primeSupportReads\t3primeSupportReads\tTSD\tConfidenceForSomaticInsertion\t5splicSiteSupportReads\t3spiceSiteSupportReads"
 } 

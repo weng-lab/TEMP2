@@ -7,8 +7,8 @@ if [ $# -lt 2 ];then
 	exit 1
 fi
 
-#samtools view -S -F 0X4 $1 | awk -v mm=$3 'BEGIN{FS=OFS="\t"}
-awk -v div=$3 -v rl=$5 'BEGIN{FS=OFS="\t"}
+#samtools view -S -F 0X4 $1 | gawk -v mm=$3 'BEGIN{FS=OFS="\t"}
+gawk -v div=$3 -v rl=$5 'BEGIN{FS=OFS="\t"}
 {if(ARGIND==1){
 	tel[$1]=$2
 }else if(ARGIND==2){

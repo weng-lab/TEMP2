@@ -5,7 +5,7 @@ if [ $# -lt 1 ];then
 	exit 1
 fi
 
-awk 'BEGIN{FS=OFS="\t"}
+gawk 'BEGIN{FS=OFS="\t"}
 {
 	split($5,tes,";");delete o;
 	if(length(tes)==1){print $0}

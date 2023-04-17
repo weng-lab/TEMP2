@@ -7,7 +7,7 @@ fi
 
 [ -f $2.fastq ] && rm $2.fastq
 [ -f $2.bed ] && rm $2.bed
-awk -v p=$2 'BEGIN{FS=OFS="\t";nul["A"]="T";nul["T"]="A";nul["C"]="G";nul["G"]="C";nul["N"]="N"}
+gawk -v p=$2 'BEGIN{FS=OFS="\t";nul["A"]="T";nul["T"]="A";nul["C"]="G";nul["G"]="C";nul["N"]="N"}
 {
 	split($6,cigar1,"M|D|I|S");split($6,cigar2,"[0-9]+");aln=0;
 	for(i=2;i<=length(cigar2);i++){

@@ -8,7 +8,7 @@ if [ $# -lt 2 ];then
 	exit 1
 fi
 
-awk -v div=$2 -v rl=$5 'BEGIN{FS=OFS="\t"}
+gawk -v div=$2 -v rl=$5 'BEGIN{FS=OFS="\t"}
 {if(ARGIND==1){
 	tel[$1]=$2
 }else{
@@ -40,8 +40,8 @@ awk -v div=$2 -v rl=$5 'BEGIN{FS=OFS="\t"}
 	if(record){
 		print 0,0,0,0,record,0
 	}
-}}' $3 $1 | awk 'BEGIN{FS=OFS="\t"} {if($5~/^;/){$5=substr($5,2)};print $0}' - | ${BINDIR}/fixLTR.sh - > $1.tmp
-awk 'BEGIN{FS=OFS="\t"} {split($5,a,";");for(i in a){split(a[i],b,",");if(b[4]=="+"){print b[1],b[2],b[3],1/length(a)}}}' $1.tmp | sort -k1,1 -k2,2n > $1.tmp.sense && ${BINDIR}/mergeOverlappedBdg $1.tmp.sense > $4.sense.bdg
-awk 'BEGIN{FS=OFS="\t"} {split($5,a,";");for(i in a){split(a[i],b,",");if(b[4]=="-"){print b[1],b[2],b[3],1/length(a)}}}' $1.tmp | sort -k1,1 -k2,2n > $1.tmp.anti && ${BINDIR}/mergeOverlappedBdg $1.tmp.anti > $4.anti.bdg
-awk 'BEGIN{FS=OFS="\t"} {split($5,a,";");for(i in a){split(a[i],b,",");print b[1],b[2],b[3],1/length(a),0,b[4]}}' $1.tmp | sort -k1,1 -k2,2n > $4.bed
+}}' $3 $1 | gawk 'BEGIN{FS=OFS="\t"} {if($5~/^;/){$5=substr($5,2)};print $0}' - | ${BINDIR}/fixLTR.sh - > $1.tmp
+gawk 'BEGIN{FS=OFS="\t"} {split($5,a,";");for(i in a){split(a[i],b,",");if(b[4]=="+"){print b[1],b[2],b[3],1/length(a)}}}' $1.tmp | sort -k1,1 -k2,2n > $1.tmp.sense && ${BINDIR}/mergeOverlappedBdg $1.tmp.sense > $4.sense.bdg
+gawk 'BEGIN{FS=OFS="\t"} {split($5,a,";");for(i in a){split(a[i],b,",");if(b[4]=="-"){print b[1],b[2],b[3],1/length(a)}}}' $1.tmp | sort -k1,1 -k2,2n > $1.tmp.anti && ${BINDIR}/mergeOverlappedBdg $1.tmp.anti > $4.anti.bdg
+gawk 'BEGIN{FS=OFS="\t"} {split($5,a,";");for(i in a){split(a[i],b,",");print b[1],b[2],b[3],1/length(a),0,b[4]}}' $1.tmp | sort -k1,1 -k2,2n > $4.bed
 rm $1.tmp $1.tmp.sense $1.tmp.anti
