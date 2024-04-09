@@ -11,9 +11,13 @@ Current version: v0.1.7
 Author: Tianxiong Yu (yutianxiong@gmail.com) in Weng Lab   
 If you have any questions or find any bugs please contact Tianxiong Yu through yutianxiong@gmail.com.
    
+## Important Updates   
+TEMP2 has updated it is dependency of python2 to python3!!!
+   
 ## Requirements   
 * Linux x86_64 systems.
 * Perl package [BioPerl](https://bioperl.org/) is needed for running **absence** module.
+* Python > 3.0.
 * Although other third-party tools have already pre-compiled and included with TEMP2, you may want to have them installed in your environment to avoid dependency errors.
 	* [bwa](http://bio-bwa.sourceforge.net/bwa.shtml)
 	* [samtools](http://www.htslib.org/) (>=v1.9)

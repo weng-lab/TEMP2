@@ -1,4 +1,4 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python
 # -*- coding: utf-8 -*-
 import sys
 import os
@@ -19,17 +19,17 @@ def main():
         transStrand = transRec[0].split(",")[3]
         transCor = []
         transSpliced = []
-        for i in transRec: transCor.append(map(int,i.split(",")[1:3]))
+        for i in transRec: transCor.append(list(map(int,i.split(",")[1:3])))
         for i in transRec: transSpliced.append(i.split(",")[-2])
-        readSt = map(int,line[6].split("|"))
-        readEd = map(int,line[7].split("|"))
+        readSt = list(map(int,line[6].split("|")))
+        readEd = list(map(int,line[7].split("|")))
         # skip if supporting read less than 2
         if len(count) < 2:
             if transSpliced[0] == "1":
                 tsp = str(count[0])
             else:
                 tsp = "0"
-            print "\t".join([line[0],line[1],line[2],str(count[0]),"0",line[5],transN,transStrand,str(transCor[0][0]),str(transCor[0][1]),line[4],tsp,tsp])
+            print("\t".join([line[0],line[1],line[2],str(count[0]),"0",line[5],transN,transStrand,str(transCor[0][0]),str(transCor[0][1]),line[4],tsp,tsp]))
         # else, calculate supporting read counts in each sliding window
         else:
             finalStep = 0
@@ -93,13 +93,13 @@ def main():
             st = min(start, key=start.get)
             ed = max(end, key=end.get)
             to = "|".join(finalTrans)
-            print "\t".join([line[0],str(st),str(ed),str(tpCount),str(fpCount),line[5],transN,transStrand,str(teSt),str(teEd),to,str(stn[st]),str(edn[ed])])
+            print("\t".join([line[0],str(st),str(ed),str(tpCount),str(fpCount),line[5],transN,transStrand,str(teSt),str(teEd),to,str(stn[st]),str(edn[ed])]))
 
 # --------functions--------
 def print_help():
     if len(sys.argv) < 2:
-        print "usage:"
-        print "%s in.merged.bed transposon_size insert_size"%sys.argv[0]
+        print("usage:")
+        print("%s in.merged.bed transposon_size insert_size"%sys.argv[0])
         sys.exit(0)
 
 # --------process--------

@@ -132,13 +132,9 @@ cd ${OUTDIR} || { $echo 0 "cannot access out_path (${OUTDIR}). Exiting..." && ex
 $echo 4 "------ Start pipeline ------"
 # Genome mapping if not done yet
 if [ -z ${BAM} ];then
-	$echo 2 "bam file not specified, map raw reads tp genome via bwa mem"
-	bwa mem -t ${CPU} ${INDEX} ${LEFT} ${RIGHT} > ${PREFIX}.sam 2>${PREFIX}.bwamem.log || \
+	$echo 2 "bam file not specified, map raw reads to genome via bwa mem"
+	bwa mem -t ${CPU} ${INDEX} ${LEFT} ${RIGHT} 2>${PREFIX}.bwamem.log | samtools view -bhS -@ ${CPU} - | samtools sort -@ ${CPU} -o ${PREFIX}.sorted.bam || \
 		{ $echo 0 "Error: bwa mem failed, please check ${OUTDIR}/${PREFIX}.bwamem.log. Exiting..." && exit 1; }
-	$echo 2 "transform sam to sorted bam and index it"
-	samtools view -bhS -@ ${CPU} ${PREFIX}.sam > ${PREFIX}.bam
-	samtools sort -@ ${CPU} -o ${PREFIX}.sorted.bam ${PREFIX}.bam
-	rm ${PREFIX}.sam ${PREFIX}.bam
 	samtools index -@ ${CPU} ${PREFIX}.sorted.bam
 	BAM=${PREFIX}.sorted.bam
 else

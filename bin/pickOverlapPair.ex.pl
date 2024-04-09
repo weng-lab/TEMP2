@@ -48,6 +48,8 @@ while (my $line=<input>) {
 	my @p=split(/\(/, $t[0]);
 	$right=$p[0];
     }
+    if (($left<($a[1]-20) || ($left>($a[1]+20)))) {$left=$a[1]}
+    if (($right<($a[2]-20) || ($right>($a[2]+20)))) {$right=$a[2]}
 
     my $leftlower=$left-500;
     my $leftupper=$left+500;
@@ -56,7 +58,7 @@ while (my $line=<input>) {
     my $chr_num=$a[0];
     $chr_num =~ s/chr//;
     if (($chrs{$a[0]} == 1) && (! defined $chrs{$chr_num})) {$chr_num=$a[0];}
-    system("samtools view -f 0x2 $title $chr_num\:$leftlower\-$leftupper $chr_num\:$rightlower\-$rightupper > temp.sam");
+    system("samtools view -f 0x2 -F 2048 -F 256 $title $chr_num\:$leftlower\-$leftupper $chr_num\:$rightlower\-$rightupper > temp.sam");
     
     open in,"temp.sam";
     my %ps=();
@@ -110,7 +112,7 @@ while (my $line=<input>) {
 	
 	if ((defined $me{$id})&&((defined $uniqp{$id})||(defined $uniqm{$id})))
 	{	    
-            if (((($ps{$id}+5)<=$right)&&($me{$id}>$right)&&($uniqm{$id}==1)) || ((($me{$id}-5)>=$left)&&($ps{$id}<$left)&&($uniqp{$id}==1))) {	    
+            if (((($ps{$id}+10)<=$right)&&($me{$id}>($right+10))&&($uniqm{$id}==1)) || ((($me{$id}-10)>=$left)&&($ps{$id}<($left-10))&&($uniqp{$id}==1))) {	    
 		$ref_sup++;
 	    }
 	}

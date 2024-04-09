@@ -1,4 +1,11 @@
 #!/share/bin/perl
+
+# Update in Aug08, 2023
+# fixed a bug that AS-XS<score for bwa mem alignment is not recognized
+# Now need the reference reads have at least 10nt overhang on both ends
+# Skip supplementary alignment
+# Check predicted breakpoint (bp), if it is too far away from the annotated one (+-20bp), set to annotated one to identify reference reads.
+
 use Bio::Seq;
 use List::Util qw(sum);
 
@@ -48,15 +55,20 @@ while (my $line=<input>) {
 	my @p=split(/\(/, $t[0]);
 	$right=$p[0];
     }
+    # check the predicted breakpoint again, if it is too far away from annotated breakpoint, then use annotated bp instead 
+    if (($left<($a[1]-20) || ($left>($a[1]+20)))) {$left=$a[1]}
+    if (($right<($a[2]-20) || ($right>($a[2]+20)))) {$right=$a[2]}
 
     my $leftlower=$left-500;
+    if ($leftlower<1){$leftlower=1};
     my $leftupper=$left+500;
     my $rightlower=$right-500;
+    if ($rightlower<1){$rightlower=1};
     my $rightupper=$right+500;
     my $chr_num=$a[0];
     $chr_num =~ s/chr//;
     if (($chrs{$a[0]} == 1) && (! defined $chrs{$chr_num})) {$chr_num=$a[0];}
-    system("samtools view -f 0x2 $title $chr_num\:$leftlower\-$leftupper $chr_num\:$rightlower\-$rightupper > temp.sam");
+    system("samtools view -f 0x2 -F 2048 -F 256 $title $chr_num\:$leftlower\-$leftupper $chr_num\:$rightlower\-$rightupper > temp.sam");
     
     open in,"temp.sam";
     my %ps=();
@@ -88,10 +100,15 @@ while (my $line=<input>) {
                 $a[$i] =~ s/XS:i://;
                 $xs=$a[$i];
             }
-            if (($xs > 0) && ($as-$xs <= $ARGV[2])) {$xt="R";}
+            if (($xs > 0) && ($as-$xs <= $ARGV[1])) {$xt="R";}
             elsif ($as > 0) {$xt="U";}
         }
 	
+	## discard supplementary alignment
+	if (($f[1] & 2048) == 2048)
+	{
+		next;
+	}
 	## Coordinate
 	my $coor=$f[3];
 	if (($f[1] & 16) == 16)
@@ -125,7 +142,7 @@ while (my $line=<input>) {
 	
 	if ((defined $me{$id})&&((defined $uniqp{$id})||(defined $uniqm{$id})))
 	{	    
-            if (((($ps{$id}+5)<=$right)&&($me{$id}>$right)&&($uniqm{$id}==1)) || ((($me{$id}-5)>=$left)&&($ps{$id}<$left)&&($uniqp{$id}==1))) {	    
+            if (((($ps{$id}+10)<=$right)&&($me{$id}>=($right+10))&&($uniqm{$id}==1)) || ((($me{$id}-10)>=$left)&&($ps{$id}<=($left-10))&&($uniqp{$id}==1))) {	    
 		$ref_sup++;
 	    }
 	}

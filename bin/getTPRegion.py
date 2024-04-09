@@ -8,13 +8,13 @@ def main():
     print_help()
     # read TE size
     tel = {}
+    tpr = {}
     for l in open(sys.argv[5]):
         li = l.strip().split()
         tel[li[0]] = int(li[1])
-    tpr = {}
     for l in open(sys.argv[6]):
         li = l.strip().split()
-            tpr[l.strip()] = [li[0], int(li[1]), int(li[2]), li[5]]
+        tpr[l.strip()] = [li[0], int(li[1]), int(li[2]), li[5]]
     # read bdgs
     dict_all_s_bdg = read_bdg(sys.argv[1], tel)
     dict_all_a_bdg = read_bdg(sys.argv[2], tel)
@@ -55,8 +55,8 @@ def read_bdg(path, tel):
 
 def print_help():
     if len(sys.argv) < 5:
-        print sys.argv[0] + " overall.sense.bdg overall.anti.bdg sinleton.sense.bdg singleton.anti.bdg te.size TPregion"
-        print "output a bed file contains observed reads and lamda in 4th and 5th colums"
+        print(sys.argv[0] + " overall.sense.bdg overall.anti.bdg sinleton.sense.bdg singleton.anti.bdg te.size TPregion")
+        print("output a bed file contains observed reads and lamda in 4th and 5th colums")
         sys.exit(0)
 
 # --------process--------
