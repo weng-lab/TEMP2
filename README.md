@@ -190,6 +190,22 @@ For transposon absence analysis, the summay output file remains exactly the same
 **Column 9**: Estimated population frequency of the detected absence event.  
   
 ## Release information
+**TEMP2-v1.0.1**
+1. Fixed bug: inaccurate insertion strand annotation in the germline mode through *TEMP2 insertion2*.
+1. Fixed bug: inaccurate insertion strand annotation in the ALU mode through **-A**.
+
+**TEMP2-v1.0.0**
+1. Updated dependency of python2 to python3.
+
+**TEMP2-v0.1.7**
+1. Fix a bug occurs when the default awk is not gawk.
+
+**TEMP2-v0.1.6**
+deprecated
+
+**TEMP2-v0.1.5**
+1. TEMP2 has now integrated the compiled verison v2.9 of bedToBigBed to get rid of the denpendency of kent tools.
+
 **TEMP2-v0.1.4**
 1. Add -G for users to input number of genomes used in the library and TEMP2 can automatically choose threshold to detect potential de novo insertions.
 
