@@ -6,7 +6,7 @@ TEMP2 is an algorithm for detecting transposon insertions using short-read whole
 If you use TEMP2 for transposon insertion detection, please cite:  
 Yu et al. A benchmark and an algorithm for detecting germline transposon insertions and measuring *de novo* transposon insertion frequencies. *Nucleic Acid Research*. 2021.  
   
-Current version: v0.1.7
+Current version: v1.0.1
 
 Author: Tianxiong Yu (yutianxiong@gmail.com) in Weng Lab   
 If you have any questions or find any bugs please contact Tianxiong Yu through yutianxiong@gmail.com.
