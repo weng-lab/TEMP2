@@ -14,10 +14,6 @@ If you have any questions or find any bugs please contact Tianxiong Yu through y
 ## Important Updates   
 TEMP2 has updated it is dependency of python2 to python3!!!
 
-## Bug fixed
-1. Inaccurate insertion strand annotation in the germline mode through **TEMP2 insertion2**.
-2. Inaccurate insertion strand annotation in the ALU mode when enabling -A.
-   
 ## Requirements   
 * Linux x86_64 systems.
 * Perl package [BioPerl](https://bioperl.org/) is needed for running **absence** module.
@@ -191,7 +187,7 @@ For transposon absence analysis, the summay output file remains exactly the same
   
 ## Release information
 **TEMP2-v1.0.1**
-1. Fixed bug: inaccurate insertion strand annotation in the germline mode through *TEMP2 insertion2*.
+1. Fixed bug: inaccurate insertion strand annotation in the germline mode through **TEMP2 insertion2**.
 1. Fixed bug: inaccurate insertion strand annotation in the ALU mode through **-A**.
 
 **TEMP2-v1.0.0**
