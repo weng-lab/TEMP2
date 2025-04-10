@@ -8,11 +8,15 @@ Yu et al. A benchmark and an algorithm for detecting germline transposon inserti
   
 Current version: v1.0.1
 
-Author: Tianxiong Yu (yutianxiong@gmail.com) in Weng Lab   
+Author: Tianxiong Yu (yutianxiong@gmail.com)   
 If you have any questions or find any bugs please contact Tianxiong Yu through yutianxiong@gmail.com.
    
 ## Important Updates   
 TEMP2 has updated it is dependency of python2 to python3!!!
+
+## Bug fixed
+1. Inaccurate insertion strand annotation in the germline mode through **TEMP2 insertion2**.
+2. Inaccurate insertion strand annotation in the ALU mode when enabling -A.
    
 ## Requirements   
 * Linux x86_64 systems.
