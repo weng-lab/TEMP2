@@ -29,7 +29,6 @@ With [git](https://git-scm.com/downloads) installed, simply type the following c
 git clone https://github.com/weng-lab/TEMP2
 ln -s $PWD/TEMP2/TEMP2 your_bin_path/
 ```
-
 To avoid mixing the pre-compiled tools with your own versions, we do **not** recommend to add `/TEMP2/bin` to the `$PATH`.
 
 Alternatively, you can also install TEMP2 after fetching [source code](http://publications.wenglab.org/TEMP2/Release):
@@ -41,14 +40,19 @@ ln -s $PWD/TEMP2 your_bin_path/
   
 ## Testing
 TEMP2 integrates a tested dataset in /TEMP2/test/  
-To test if TEMP2 is successfully installed, you can run the command below:
+To test if TEMP2 is successfully installed, you can run the command below to test the main module for calling transposon insertions:
 ```
 cd TEMP2/test
 TEMP2 insertion -l test.1.fastq.gz -r test.2.fastq.gz -I bwa_index/chr2L -g chr2L.fa -R transposon.fa -t rmsk.bed -o test_output -c 2
-```
+```  
 
 This command takes around 2 minutes with 2 avaiable CPU. A successul installation should outputs `test.insertion.bed` and `test.soma.summary.txt` in the folder `test_output`, which contains detected insertions and estimated *de novo* insertion number per genome respectively.
    
+Run following commands after testing the main module if you want to test TEMP2 absence module:  
+```
+TEMP2 absence -i ${PWD}/test_output/test.sorted.bam -r ${PWD}/rmsk.bed -t ${PWD}/chr2L.2bit -x 5 -f 1000 -o ${PWD}/test_output/absence
+```  
+
 ## Getting start
 TEMP2 includes three modules:  
 1. **insertion**. The most general module that detects both germline and *de novo* transposon insertions.
